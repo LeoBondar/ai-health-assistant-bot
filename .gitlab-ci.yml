@@ -1,0 +1,71 @@
+stages:
+  - dev_build
+  - dev_deploy
+  - prod_build
+  - prod_deploy
+  
+
+# Этап сборки контейнера для релиза
+dev_build:
+  stage: dev_build
+  tags:
+    - dev-stage
+  script:
+    - cp "$ENV_DEV" .env
+    - docker-compose -f docker-compose.yaml build
+  environment:
+    name: dev-stage
+  only:
+    - release
+
+
+# Этап деплоя для dev окружения
+dev_deploy:
+  stage: dev_deploy
+  tags:
+    - dev-stage
+  script:
+    - cp "$ENV_DEV" .env  # Используем переменную ENV_PROD для прод окружения
+    # Останавливаем и удаляем все контейнеры, связанные с проектом`
+    - docker-compose -f docker-compose.yaml down
+    - sed -i "s/127.0.0.1:8080:8080/127.0.0.1:$DEV_PORT:8080/" docker-compose.yaml
+    - docker-compose -f docker-compose.yaml up -d
+    - docker image prune -af
+    - docker builder prune -af
+  environment:
+    name: dev-stage
+    url: https://api.nbithub.dev-stage-team.com
+  only:
+    - release
+
+
+# Этап сборки контейнера для прода
+prod_build:
+  stage: prod_build
+  tags:
+    - ai_support_runner_bot_prod
+  script:
+    - cp "$ENV_PROD" .env
+    - docker-compose -p ai_support_runner_bot -f docker-compose.yaml build
+  environment:
+    name: ai_support_runner_bot_prod
+  only:
+    - master
+
+
+#Этап деплоя для prod окружения
+prod_deploy:
+  stage: prod_deploy
+  tags:
+    - ai_support_runner_bot_prod
+  script:
+    - cp "$ENV_PROD" .env  # Используем переменную ENV_PROD для прод окружения
+    # Останавливаем и удаляем все контейнеры, связанные с проектом`
+    - docker-compose -p ai_support_runner_bot -f docker-compose.yaml down
+    - docker-compose -p ai_support_runner_bot -f docker-compose.yaml up -d
+    - docker image prune -af
+  environment:
+    name: ai_support_runner_bot_prod
+    url: https://t.me/bot_zalupa_tests_bot
+  only:
+    - master

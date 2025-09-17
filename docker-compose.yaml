@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      migrations:
+        condition: service_healthy  # app зависит от состояния healthcheck контейнера migrations
+    networks:
+      - service-network
+    ports:
+      - "8443:8443"
+
+  check-services:
+    image: alpine:3.19
+    container_name: service-checker
+    env_file:
+      - .env
+    command: >
+      sh -c "
+        apk add --no-cache postgresql-client redis;
+        echo '🔍 Checking PostgreSQL at ${DB_HOST}:${DB_PORT}...';
+        until pg_isready -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER}; do sleep 2; done;
+        echo '✅ PostgreSQL is ready!';
+
+        echo '🔍 Checking Redis at ${REDIS_HOST}:${REDIS_PORT}...';
+        until redis-cli --tls --cert /certs/redis.crt --key /certs/redis.key --cacert /certs/ca.crt -h ${REDIS_HOST} -p ${REDIS_PORT} -a ${REDIS_PASSWORD} ping | grep PONG; do sleep 2; done
+
+        echo '✅ Redis is ready!';
+      "
+    networks:
+      - service-network
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile-migrations
+    env_file:
+      - .env
+    depends_on:
+      - check-services
+    networks:
+      - service-network
+    healthcheck:
+      test: ["CMD", "liquibase", "--url=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DB", "--username=$DB_USER", "--password=$DB_PASSWORD", "status", "--changeLogFile=changelog.xml"]
+      interval: 30s
+      retries: 5
+      start_period: 5s
+      timeout: 10s
+
+networks:
+  service-network:
+    driver: bridge
