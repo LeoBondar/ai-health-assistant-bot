@@ -13,14 +13,8 @@ from aiogram.types import (
 from bot import exceptions
 from bot.common.keyboards.keyboard_utils import schema_generator
 
-POSSIBLE_BUTTON_PROPERTIES_VALUES = (  # https://core.telegram.org/bots/api#inlinekeyboardbutton
-    str
-    | WebAppInfo
-    | LoginUrl
-    | SwitchInlineQueryChosenChat
-    | CallbackGame
-    | bool
-    | CallbackData  # aiogram callback factory
+POSSIBLE_BUTTON_PROPERTIES_VALUES = (
+    str | WebAppInfo | LoginUrl | SwitchInlineQueryChosenChat | CallbackGame | bool | CallbackData
 )
 POSSIBLE_INPUT_ACTIONS_TYPES = dict[str, POSSIBLE_BUTTON_PROPERTIES_VALUES]
 
@@ -47,12 +41,12 @@ class InlineConstructor:
     max_possible_properties = len(required_properties) + max_additional_properties
 
     @staticmethod
-    def _create_kb(  # noqa: C901
+    def _create_kb(
         actions: list[POSSIBLE_INPUT_ACTIONS_TYPES],
         schema: list[int],
     ) -> InlineKeyboardMarkup:
         btns: list[InlineKeyboardButton] = []
-        # noinspection DuplicatedCode
+
         for cur_action in actions:
             data: dict[str, POSSIBLE_BUTTON_PROPERTIES_VALUES] = {}
             for k, v in InlineConstructor.aliases.items():
@@ -83,7 +77,7 @@ class InlineConstructor:
                 if len(btns) != 0 and data["pay"]:
                     raise exceptions.PaymentButtonMustBeFirstError
                 data["pay"] = cur_action["pay"]
-            btns.append(InlineKeyboardButton(**data))  # type:ignore[arg-type]
+            btns.append(InlineKeyboardButton(**data))
         kb = InlineKeyboardMarkup(
             inline_keyboard=schema_generator.create_keyboard_layout(btns, schema),
         )

@@ -13,7 +13,7 @@ from aiogram.types import (
 from bot import exceptions
 from bot.common.keyboards.keyboard_utils import schema_generator
 
-POSSIBLE_BUTTON_PROPERTIES_VALUES = (  # https://core.telegram.org/bots/api#keyboardbutton
+POSSIBLE_BUTTON_PROPERTIES_VALUES = (
     str | bool | KeyboardButtonPollType | KeyboardButtonRequestUsers | KeyboardButtonRequestChat | WebAppInfo
 )
 POSSIBLE_INPUT_ACTIONS_TYPES = str | dict[str, POSSIBLE_BUTTON_PROPERTIES_VALUES]
@@ -41,7 +41,7 @@ class DefaultConstructor:
     max_possible_properties = len(required_properties) + max_additional_properties
 
     @staticmethod
-    def _create_kb(  # noqa: PLR0913
+    def _create_kb(
         actions: Sequence[POSSIBLE_INPUT_ACTIONS_TYPES],
         schema: Sequence[int],
         *,
@@ -51,7 +51,7 @@ class DefaultConstructor:
         is_persistent: bool = True,
     ) -> ReplyKeyboardMarkup:
         btns: list[KeyboardButton] = []
-        # noinspection DuplicatedCode
+
         for i in actions:
             data: dict[str, POSSIBLE_BUTTON_PROPERTIES_VALUES] = {}
             if isinstance(i, str):
@@ -82,8 +82,8 @@ class DefaultConstructor:
                         required_args=DefaultConstructor.required_properties,
                     )
             else:
-                raise TypeError("unknown action type")  # noqa: TRY003, EM101
-            btns.append(KeyboardButton(**data))  # type:ignore[arg-type]
+                raise TypeError("unknown action type")
+            btns.append(KeyboardButton(**data))
         kb = ReplyKeyboardMarkup(
             resize_keyboard=resize_keyboard,
             selective=selective,

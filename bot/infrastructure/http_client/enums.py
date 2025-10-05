@@ -10,6 +10,5 @@ class RequestMethodType(str, Enum):
 
 
 class ClientsEnum(str, Enum):
-    """Это перечисление возможных клиентов для HttpClientsFactory"""
 
     AI_HEALTH = "AI_HEALTH"

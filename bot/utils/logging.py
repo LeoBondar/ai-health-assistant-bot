@@ -19,8 +19,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
     ]
     processors: list[structlog.typing.Processor] = [*shared_processors]
     if sys.stderr.isatty():
-        # Pretty printing when we run in a terminal session.
-        # Automatically prints pretty tracebacks when "rich" is installed
+
         processors.extend(
             [
                 structlog.processors.TimeStamper(fmt="iso", utc=True),
@@ -28,8 +27,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
             ],
         )
     else:
-        # Print JSON when we run, e.g., in a Docker container.
-        # Also print structured tracebacks.
+
         processors.extend(
             [
                 structlog.processors.TimeStamper(fmt=None, utc=True),

@@ -46,7 +46,7 @@ def setup_middlewares(dp: Dispatcher) -> None:
 async def setup_bot() -> tuple[Dispatcher, Bot]:
     container = DIContainer()
     container.init_resources()
-    await container.client_factory.provides.init_all()  # type: ignore[union-attr]
+    await container.client_factory.provides.init_all()
 
     aiogram_session_logger = utils.logging.setup_logger().bind(type="aiogram_session")
     session = utils.smart_session.SmartAiogramAiohttpSession(

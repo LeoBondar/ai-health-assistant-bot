@@ -32,22 +32,13 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
             url=self.api.api_url(bot.token, method.__api_method__),
         )
         st = time.monotonic()
-        # req_logger.debug("Making request to API", extra={"type": "debug"})
+
         try:
             res = await super().make_request(bot, method, timeout)
         except Exception as e:
-            # req_logger.exception(
-            #     "API error",
-            #     error=e,
-            #     time_spent_ms=(time.monotonic() - st) * 1000,
-            # )
+
             raise
-        # req_logger.debug(
-        #     "API response",
-        #     response=(res.model_dump(exclude_none=True, exclude_unset=True) if hasattr(res, "model_dump") else res),
-        #     time_spent_ms=(time.monotonic() - st) * 1000,
-        #     extra={"type": "debug"}
-        # )
+
         return res
 
 
@@ -66,7 +57,7 @@ class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
             except TelegramRetryAfter as e:
                 await asyncio.sleep(e.retry_after)
             except (RestartingTelegram, TelegramServerError):
-                if attempt > 6:  # noqa: PLR2004
+                if attempt > 6:
                     sleepy_time = 64
                 else:
                     sleepy_time = 2**attempt
