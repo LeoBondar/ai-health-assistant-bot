@@ -21,7 +21,7 @@ def register_uuid_mapping(uuid: UUID) -> str:
 def get_full_uuid(short_uuid: str) -> UUID:
     if short_uuid in _uuid_mapping:
         return _uuid_mapping[short_uuid]
-    raise ValueError(f"UUID с коротким ID {short_uuid} не найден в маппинге")
+    raise ValueError(f"UUID with short ID {short_uuid} not found in mapping")
 
 
 class Action(CallbackData, prefix="act"):

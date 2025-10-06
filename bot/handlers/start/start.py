@@ -219,7 +219,7 @@ async def handle_open_chat(
     try:
         chat_id = await safe_get_full_uuid(callback_data.chat_id, callback.from_user.id, get_chats_view)
     except ValueError:
-        await callback.answer("Чат не найден или устарела ссылка")
+        await callback.answer("Chat not found or link expired")
         return
 
     await state.update_data(active_chat_id=str(chat_id))
@@ -234,7 +234,7 @@ async def handle_open_chat(
                 break
 
         if current_chat is None:
-            await callback.answer("Чат не найден")
+            await callback.answer("Chat not found")
             return
 
         plan_info = await get_plan_info_view(current_chat.plan_id)
@@ -245,7 +245,7 @@ async def handle_open_chat(
         has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
         plan_text = PlanFillingHelper.format_plan_info(plan_info)
 
-        message_text = f"💬 Чат: {current_chat.name}\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}"
+        message_text = f"💬 Chat: {current_chat.name}\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}"
 
         if is_complete:
             message_text += f"\n\n{PLAN_READY_MESSAGE}"
@@ -258,7 +258,7 @@ async def handle_open_chat(
             await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при получении информации о плане: {str(e)}")
+        await callback.answer(f"Error getting plan information: {str(e)}")
         return
 
     await callback.answer()
@@ -378,10 +378,10 @@ async def handle_fill_plan(
         elif next_step == PlanFillingStates.choosing_exercise.state:
             await start_exercise_selection(callback, plan_id, state)
         else:
-            await callback.answer("План уже заполнен!")
+            await callback.answer("Plan already completed!")
 
     except Exception as e:
-        await callback.answer(f"Ошибка: {str(e)}")
+        await callback.answer(f"Error: {str(e)}")
 
 
 @inject
@@ -407,7 +407,7 @@ async def start_factor_selection(
             await callback.message.edit_text(CHOOSE_RISK_FACTOR_MESSAGE, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при получении факторов риска: {str(e)}")
+        await callback.answer(f"Error getting risk factors: {str(e)}")
 
 
 async def start_disease_input(callback: types.CallbackQuery, state: FSMContext) -> None:
@@ -442,7 +442,7 @@ async def start_goal_selection(
             await callback.message.edit_text(CHOOSE_GOAL_MESSAGE, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при получении целей: {str(e)}")
+        await callback.answer(f"Error getting goals: {str(e)}")
 
 
 @inject
@@ -468,7 +468,7 @@ async def start_place_selection(
             await callback.message.edit_text(CHOOSE_PLACE_MESSAGE, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при получении мест: {str(e)}")
+        await callback.answer(f"Error getting places: {str(e)}")
 
 
 @inject
@@ -494,7 +494,7 @@ async def start_exercise_selection(
             await callback.message.edit_text(CHOOSE_EXERCISE_MESSAGE, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при получении упражнений: {str(e)}")
+        await callback.answer(f"Error getting exercises: {str(e)}")
 
 
 @router.callback_query(FactorAction.filter())
@@ -522,7 +522,7 @@ async def handle_factor_selection(
         await start_disease_input(callback, state)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при добавлении фактора: {str(e)}")
+        await callback.answer(f"Error adding factor: {str(e)}")
 
 
 @router.message(PlanFillingStates.entering_disease)
@@ -561,7 +561,7 @@ async def handle_disease_input(
         await message.answer(f"{DISEASE_ADDED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
 
     except Exception as e:
-        await message.answer(f"Ошибка при добавлении заболевания: {str(e)}")
+        await message.answer(f"Error adding disease: {str(e)}")
 
 
 @router.callback_query(GoalAction.filter())
@@ -589,7 +589,7 @@ async def handle_goal_selection(
         await start_place_selection(callback, plan_id, state)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при добавлении цели: {str(e)}")
+        await callback.answer(f"Error adding goal: {str(e)}")
 
 
 @router.callback_query(PlaceAction.filter())
@@ -617,7 +617,7 @@ async def handle_place_selection(
         await start_exercise_selection(callback, plan_id, state)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при добавлении места: {str(e)}")
+        await callback.answer(f"Error adding place: {str(e)}")
 
 
 @router.callback_query(ExerciseAction.filter())
@@ -647,7 +647,7 @@ async def handle_exercise_selection(
         plan_text = PlanFillingHelper.format_plan_info(plan_info)
 
         message_text = (
-            f"🎉 План успешно заполнен!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
         )
         keyboard = create_plan_keyboard(plan_id, True, False)
 
@@ -657,7 +657,7 @@ async def handle_exercise_selection(
             await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
-        await callback.answer(f"Ошибка при добавлении упражнения: {str(e)}")
+        await callback.answer(f"Error adding exercise: {str(e)}")
 
 
 @router.callback_query(PlanAction.filter(F.action == "generate_recommendations"))
@@ -676,7 +676,7 @@ async def handle_generate_recommendations(
         # Проверяем, что план заполнен
         plan_info = await get_plan_info_view(plan_id)
         if not PlanFillingHelper.is_plan_complete(plan_info):
-            await callback.answer("Сначала заполните весь план!")
+            await callback.answer("Please complete the entire plan first!")
             return
 
         # Показываем сообщение о генерации
@@ -703,10 +703,10 @@ async def handle_generate_recommendations(
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
 
-        await callback.answer("Готово!")
+        await callback.answer("Done!")
 
     except Exception as e:
-        await callback.answer(f"Ошибка при генерации рекомендаций: {str(e)}")
+        await callback.answer(f"Error generating recommendations: {str(e)}")
         # Возвращаем предыдущее состояние при ошибке
         try:
             plan_info = await get_plan_info_view(plan_id)

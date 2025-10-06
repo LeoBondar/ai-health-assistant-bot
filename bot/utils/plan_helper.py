@@ -44,33 +44,33 @@ class PlanFillingHelper:
         lines = []
 
         if plan_info.risk_factor:
-            lines.append(f"🔍 Фактор риска: {plan_info.risk_factor.factor}")
+            lines.append(f"🔍 Risk Factor: {plan_info.risk_factor.factor}")
         else:
-            lines.append("🔍 Фактор риска: не заполнено")
+            lines.append("🔍 Risk Factor: not filled")
 
         if plan_info.disease:
-            lines.append(f"🏥 Заболевание: {plan_info.disease.name}")
+            lines.append(f"🏥 Disease: {plan_info.disease.name}")
         else:
-            lines.append("🏥 Заболевание: не заполнено")
+            lines.append("🏥 Disease: not filled")
 
         if plan_info.user_goal:
-            lines.append(f"🎯 Цель: {plan_info.user_goal.name}")
+            lines.append(f"🎯 Goal: {plan_info.user_goal.name}")
         else:
-            lines.append("🎯 Цель: не заполнено")
+            lines.append("🎯 Goal: not filled")
 
         if plan_info.place:
-            lines.append(f"📍 Место: {plan_info.place.name}")
+            lines.append(f"📍 Place: {plan_info.place.name}")
         else:
-            lines.append("📍 Место: не заполнено")
+            lines.append("📍 Place: not filled")
 
         if plan_info.exercise:
-            lines.append(f"💪 Упражнение: {plan_info.exercise.name} ({plan_info.exercise.type})")
+            lines.append(f"💪 Exercise: {plan_info.exercise.name} ({plan_info.exercise.type})")
         else:
-            lines.append("💪 Упражнение: не заполнено")
+            lines.append("💪 Exercise: not filled")
 
         if plan_info.description:
             lines.append("")
-            lines.append("🎯 *Персональные рекомендации:*")
+            lines.append("🎯 *Personalized Recommendations:*")
             lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             lines.append(f"📋 {plan_info.description}")
 
