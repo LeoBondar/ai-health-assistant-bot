@@ -6,6 +6,7 @@ from bot.infrastructure.http_client.enums import ClientsEnum
 from bot.infrastructure.http_client.factory import HttpClientsFactory
 from bot.settings import Settings
 from bot.views.service.add_chat import AddChatView
+from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.add_plan_disease import AddPlanDiseaseView
 from bot.views.service.add_plan_exercise import AddPlanExerciseView
 from bot.views.service.add_plan_factor import AddPlanFactorView
@@ -19,6 +20,7 @@ from bot.views.service.get_plan_info import GetPlanInfoView
 from bot.views.service.get_risk_factors import GetRiskFactorsView
 from bot.views.service.get_user_goals import GetUserGoalsView
 from bot.views.service.send_message import AddChatMessageView
+from bot.views.service.update_plan import UpdatePlanView
 
 
 class DIContainer(containers.DeclarativeContainer):
@@ -36,6 +38,7 @@ class DIContainer(containers.DeclarativeContainer):
         GetUserChatsView, adapter=ai_health_adapter
     )
     add_chat_view: providers.Factory[AddChatView] = providers.Factory(AddChatView, adapter=ai_health_adapter)
+    delete_chat_view: providers.Factory[DeleteChatView] = providers.Factory(DeleteChatView, adapter=ai_health_adapter)
     add_chat_message_view: providers.Factory[AddChatMessageView] = providers.Factory(
         AddChatMessageView, adapter=ai_health_adapter
     )
@@ -70,4 +73,7 @@ class DIContainer(containers.DeclarativeContainer):
     )
     generate_plan_view: providers.Factory[GeneratePlanView] = providers.Factory(
         GeneratePlanView, adapter=ai_health_adapter
+    )
+    update_plan_view: providers.Factory[UpdatePlanView] = providers.Factory(
+        UpdatePlanView, adapter=ai_health_adapter
     )

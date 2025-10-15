@@ -22,6 +22,7 @@ from bot.common.keyboards.keys import (
     CREATE_CHAT,
     FILL_PLAN,
     GET_RECOMMENDATIONS,
+    SKIP_STEP,
     UPDATE_RECOMMENDATIONS,
 )
 from bot.common.keyboards.samples import (
@@ -34,6 +35,7 @@ from bot.common.keyboards.samples import (
     create_main_menu_keyboard,
     create_places_keyboard,
     create_plan_keyboard,
+    create_preferences_input_keyboard,
 )
 from bot.common.messages import (
     AI_RESPONSE_MESSAGE,
@@ -46,10 +48,12 @@ from bot.common.messages import (
     DISEASE_ADDED_MESSAGE,
     ENTER_CHAT_NAME_MESSAGE,
     ENTER_DISEASE_MESSAGE,
+    ENTER_PREFERENCES_MESSAGE,
     ERROR_CHAT_CREATION_MESSAGE,
     ERROR_CHAT_ID_NOT_FOUND,
     ERROR_EMPTY_CHAT_NAME_MESSAGE,
     ERROR_EMPTY_DISEASE_NAME,
+    ERROR_EMPTY_PREFERENCES_MESSAGE,
     ERROR_MESSAGE_SEND_FAILED,
     ERROR_TEXT_MESSAGE_ONLY,
     ERROR_TEXT_ONLY_MESSAGE,
@@ -63,15 +67,19 @@ from bot.common.messages import (
     PLAN_EMPTY_MESSAGE,
     PLAN_INFO_MESSAGE,
     PLAN_READY_MESSAGE,
+    PLAN_UPDATED_SUCCESS_MESSAGE,
     PROCESSING_MESSAGE,
     RECOMMENDATIONS_GENERATED_MESSAGE,
     RECOMMENDATIONS_UPDATED_MESSAGE,
+    STEP_SKIPPED_MESSAGE,
+    UPDATING_PLAN_MESSAGE,
 )
 from bot.dependencies.di_container import DIContainer
 from bot.fsm.managers.main_menu import FSMMainMenuManager
-from bot.fsm.states import ActiveChatStates, CreateChatStates, PlanFillingStates
+from bot.fsm.states import ActiveChatStates, CreateChatStates, PlanFillingStates, UpdatePlanStates
 from bot.utils.plan_helper import PlanFillingHelper
 from bot.views.service.add_chat import AddChatView
+from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.add_plan_disease import AddPlanDiseaseView
 from bot.views.service.add_plan_exercise import AddPlanExerciseView
 from bot.views.service.add_plan_factor import AddPlanFactorView
@@ -85,6 +93,7 @@ from bot.views.service.get_plan_info import GetPlanInfoView
 from bot.views.service.get_risk_factors import GetRiskFactorsView
 from bot.views.service.get_user_goals import GetUserGoalsView
 from bot.views.service.send_message import AddChatMessageView
+from bot.views.service.update_plan import UpdatePlanView
 
 router = Router(name="start")
 
@@ -102,6 +111,15 @@ async def safe_get_full_uuid(short_uuid: str, user_id: int, get_chats_view: GetU
     except ValueError:
         await ensure_uuid_mapping_exists(user_id, get_chats_view)
         return get_full_uuid(short_uuid)
+
+
+async def get_chat_id_by_plan_id(plan_id: UUID, user_id: int, get_chats_view: GetUserChatsView) -> UUID:
+    """Получить chat_id по plan_id"""
+    user_chats_response = await get_chats_view(user_id)
+    for chat in user_chats_response.chats:
+        if chat.plan_id == plan_id:
+            return chat.id
+    raise ValueError(f"Chat not found for plan_id: {plan_id}")
 
 
 async def safe_get_factor_uuids(
@@ -252,7 +270,7 @@ async def handle_open_chat(
         else:
             message_text += f"\n\n{PLAN_EMPTY_MESSAGE}"
 
-        keyboard = create_plan_keyboard(current_chat.plan_id, is_complete, has_description)
+        keyboard = create_plan_keyboard(current_chat.plan_id, current_chat.id, is_complete, has_description)
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -262,6 +280,34 @@ async def handle_open_chat(
         return
 
     await callback.answer()
+
+
+@router.callback_query(ChatAction.filter(F.action == "delete"))
+@inject
+async def handle_delete_chat(
+    callback: types.CallbackQuery,
+    callback_data: ChatAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+    delete_chat_view: DeleteChatView = Provide[DIContainer.delete_chat_view],
+) -> None:
+    try:
+        chat_id = await safe_get_full_uuid(callback_data.chat_id, callback.from_user.id, get_chats_view)
+        
+        await delete_chat_view(chat_id)
+        
+        await FSMMainMenuManager.reset_main_menu_state(state)
+        
+        user_chats_response = await get_chats_view(callback.from_user.id)
+        keyboard = create_main_menu_keyboard(user_chats_response.chats)
+        
+        if callback.message:
+            await callback.message.edit_text("✅ Chat deleted successfully!\n\n" + GREETINGS_MESSAGE, reply_markup=keyboard)
+        
+        await callback.answer("Chat deleted successfully!")
+        
+    except Exception as e:
+        await callback.answer(f"Error deleting chat: {str(e)}")
 
 
 @router.callback_query(Action.filter(F.action == CREATE_CHAT))
@@ -525,6 +571,45 @@ async def handle_factor_selection(
         await callback.answer(f"Error adding factor: {str(e)}")
 
 
+@router.callback_query(Action.filter(F.action == SKIP_STEP))
+@inject
+async def handle_skip_disease(
+    callback: types.CallbackQuery,
+    callback_data: Action,
+    state: FSMContext,
+    add_plan_disease_view: AddPlanDiseaseView = Provide[DIContainer.add_plan_disease_view],
+    get_user_goals_view: GetUserGoalsView = Provide[DIContainer.get_user_goals_view],
+) -> None:
+    try:
+        current_state = await state.get_state()
+        if current_state != PlanFillingStates.entering_disease.state:
+            await callback.answer("Skip is not available for this step")
+            return
+
+        data = await state.get_data()
+        plan_id = UUID(data.get("plan_id"))
+
+        await add_plan_disease_view(plan_id, "don't have")
+
+        goals_response = await get_user_goals_view()
+
+        for goal in goals_response.goals:
+            register_uuid_mapping(goal.id)
+        register_uuid_mapping(plan_id)
+
+        keyboard = create_goals_keyboard(goals_response.goals, plan_id)
+
+        await state.set_state(PlanFillingStates.choosing_goal)
+
+        if callback.message:
+            await callback.message.edit_text(f"{STEP_SKIPPED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+
+        await callback.answer()
+
+    except Exception as e:
+        await callback.answer(f"Error skipping disease step: {str(e)}")
+
+
 @router.message(PlanFillingStates.entering_disease)
 @inject
 async def handle_disease_input(
@@ -649,7 +734,9 @@ async def handle_exercise_selection(
         message_text = (
             f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
         )
-        keyboard = create_plan_keyboard(plan_id, True, False)
+        # Get chat_id by plan_id
+        chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+        keyboard = create_plan_keyboard(plan_id, chat_id, True, False)
 
         await state.set_state(PlanFillingStates.plan_completed)
 
@@ -673,32 +760,29 @@ async def handle_generate_recommendations(
     try:
         plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
 
-        # Проверяем, что план заполнен
         plan_info = await get_plan_info_view(plan_id)
         if not PlanFillingHelper.is_plan_complete(plan_info):
             await callback.answer("Please complete the entire plan first!")
             return
 
-        # Показываем сообщение о генерации
         if callback.message:
             await callback.message.edit_text(GENERATING_RECOMMENDATIONS_MESSAGE)
 
-        # Генерируем рекомендации
         had_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
         result = await generate_plan_view(plan_id)
 
-        # Получаем обновленную информацию о плане
         updated_plan_info = await get_plan_info_view(plan_id)
         plan_text = PlanFillingHelper.format_plan_info(updated_plan_info)
 
-        # Формируем сообщение
         if had_description:
             success_message = RECOMMENDATIONS_UPDATED_MESSAGE
         else:
             success_message = RECOMMENDATIONS_GENERATED_MESSAGE
 
         message_text = f"{success_message}\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}"
-        keyboard = create_plan_keyboard(plan_id, True, True)
+        # Get chat_id by plan_id
+        chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+        keyboard = create_plan_keyboard(plan_id, chat_id, True, True)
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -707,7 +791,6 @@ async def handle_generate_recommendations(
 
     except Exception as e:
         await callback.answer(f"Error generating recommendations: {str(e)}")
-        # Возвращаем предыдущее состояние при ошибке
         try:
             plan_info = await get_plan_info_view(plan_id)
             plan_text = PlanFillingHelper.format_plan_info(plan_info)
@@ -718,11 +801,92 @@ async def handle_generate_recommendations(
             if is_complete:
                 message_text += f"\n\n{PLAN_READY_MESSAGE}"
 
-            keyboard = create_plan_keyboard(plan_id, is_complete, has_description)
+            # Get chat_id by plan_id  
+            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+            keyboard = create_plan_keyboard(plan_id, chat_id, is_complete, has_description)
             if callback.message:
                 await callback.message.edit_text(message_text, reply_markup=keyboard)
         except:
             pass
+
+
+@router.callback_query(PlanAction.filter(F.action == "update_recommendations"))
+@inject
+async def handle_update_recommendations(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+
+        plan_info = await get_plan_info_view(plan_id)
+        if not PlanFillingHelper.is_plan_complete(plan_info):
+            await callback.answer("Please complete the entire plan first!")
+            return
+        
+        if not (plan_info.description and len(plan_info.description.strip()) > 0):
+            await callback.answer("Plan must have recommendations to update them!")
+            return
+
+        await state.update_data(plan_id=str(plan_id))
+        await state.set_state(UpdatePlanStates.waiting_for_preferences)
+
+        keyboard = create_preferences_input_keyboard()
+
+        if callback.message:
+            await callback.message.edit_text(ENTER_PREFERENCES_MESSAGE, reply_markup=keyboard)
+
+        await callback.answer()
+
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@router.message(UpdatePlanStates.waiting_for_preferences)
+@inject
+async def handle_preferences_input(
+    message: types.Message,
+    state: FSMContext,
+    update_plan_view: UpdatePlanView = Provide[DIContainer.update_plan_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    if not message.text:
+        await message.answer(ERROR_TEXT_ONLY_MESSAGE)
+        return
+
+    preferences = message.text.strip()
+    if not preferences:
+        await message.answer(ERROR_EMPTY_PREFERENCES_MESSAGE)
+        return
+
+    try:
+        data = await state.get_data()
+        plan_id = UUID(data.get("plan_id"))
+
+        processing_msg = await message.answer(UPDATING_PLAN_MESSAGE)
+
+        result = await update_plan_view(plan_id, preferences)
+
+        updated_plan_info = await get_plan_info_view(plan_id)
+        plan_text = PlanFillingHelper.format_plan_info(updated_plan_info)
+
+        message_text = f"{PLAN_UPDATED_SUCCESS_MESSAGE}\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}"
+        # Get chat_id by plan_id  
+        chat_id = await get_chat_id_by_plan_id(plan_id, message.from_user.id, get_chats_view)
+        keyboard = create_plan_keyboard(plan_id, chat_id, True, True)
+
+        await processing_msg.delete()
+        await message.answer(message_text, reply_markup=keyboard)
+
+        await state.clear()
+
+    except Exception as e:
+        await message.answer(f"Error updating plan: {str(e)}")
+        await FSMMainMenuManager.reset_main_menu_state(state)
 
 
 @router.message(ActiveChatStates.in_chat)

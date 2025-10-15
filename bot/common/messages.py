@@ -26,9 +26,9 @@ GENERATING_RECOMMENDATIONS_MESSAGE = "⏳ Generating personalized recommendation
 RECOMMENDATIONS_GENERATED_MESSAGE = "✅ Recommendations generated successfully!"
 RECOMMENDATIONS_UPDATED_MESSAGE = "🔄 Recommendations updated!"
 
-CHOOSE_RISK_FACTOR_MESSAGE = "🔍 Choose a risk factor from the list:"
-ENTER_DISEASE_MESSAGE = "🏥 Enter the name of the disease:"
-CHOOSE_GOAL_MESSAGE = "🎯 Choose your goal from the list:"
+CHOOSE_RISK_FACTOR_MESSAGE = "🔍 Select a risk factor you wish to begin managing:"
+ENTER_DISEASE_MESSAGE = "🏥 If you have any diseases or conditions that can limit your physical activity, please enter them separated by commas:"
+CHOOSE_GOAL_MESSAGE = "🎯 Choose your goal from the list or enter your own:"
 CHOOSE_PLACE_MESSAGE = "📍 Choose a place for exercises:"
 CHOOSE_EXERCISE_MESSAGE = "💪 Choose an exercise:"
 
@@ -43,3 +43,8 @@ ERROR_PLAN_NOT_FOUND = "❌ Plan not found."
 ERROR_ADDING_TO_PLAN = "❌ Error adding to plan: {error}"
 ERROR_GETTING_DATA = "❌ Error getting data: {error}"
 ERROR_EMPTY_DISEASE_NAME = "❌ Disease name cannot be empty. Please try again:"
+
+ENTER_PREFERENCES_MESSAGE = "📝 Please enter your preferences and wishes for updating the plan:"
+ERROR_EMPTY_PREFERENCES_MESSAGE = "❌ Preferences cannot be empty. Please try again:"
+UPDATING_PLAN_MESSAGE = "⏳ Updating your plan with your preferences..."
+PLAN_UPDATED_SUCCESS_MESSAGE = "✅ Plan updated successfully with your preferences!"

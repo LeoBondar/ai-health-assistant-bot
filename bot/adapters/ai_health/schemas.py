@@ -9,6 +9,10 @@ class AIAAddChatCommand(ApiCamelModel):
     use_context: bool = True
 
 
+class AIADeleteChatCommand(ApiCamelModel):
+    chat_id: UUID
+
+
 class AIAGetUserChatCommand(ApiCamelModel):
     limit: int = 10
     offset: int = 0
@@ -50,6 +54,11 @@ class AIAGeneratePlanCommand(ApiCamelModel):
     plan_id: UUID
 
 
+class AIAUpdatePlanCommand(ApiCamelModel):
+    plan_id: UUID
+    comment: str
+
+
 class AIAGetPlanInfoCommand(ApiCamelModel):
     plan_id: UUID
 
@@ -76,6 +85,10 @@ class AIAGetUserGoalsCommand(ApiCamelModel):
 
 class AIAAddChatResponse(ApiCamelModel):
     id: UUID
+
+
+class AIADeleteChatResponse(ApiCamelModel):
+    pass
 
 
 class ChatData(ApiCamelModel):
@@ -166,4 +179,8 @@ class AIAAddPlanDiseaseResponse(ApiCamelModel):
 
 
 class AIAGeneratePlanResponse(ApiCamelModel):
+    description: str
+
+
+class AIAUpdatePlanResponse(ApiCamelModel):
     description: str

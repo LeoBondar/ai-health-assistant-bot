@@ -18,8 +18,10 @@ from bot.common.keyboards.keys import (
     BACK_TO_MENU,
     CANCEL,
     CREATE_CHAT,
+    DELETE_CHAT,
     FILL_PLAN,
     GET_RECOMMENDATIONS,
+    SKIP_STEP,
     UPDATE_RECOMMENDATIONS,
 )
 
@@ -63,7 +65,7 @@ def create_chat_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def create_plan_keyboard(plan_id: UUID, is_complete: bool, has_description: bool) -> InlineKeyboardMarkup:
+def create_plan_keyboard(plan_id: UUID, chat_id: UUID, is_complete: bool, has_description: bool) -> InlineKeyboardMarkup:
     actions = []
 
     if is_complete:
@@ -71,7 +73,7 @@ def create_plan_keyboard(plan_id: UUID, is_complete: bool, has_description: bool
             actions.append(
                 {
                     "text": UPDATE_RECOMMENDATIONS,
-                    "callback_data": PlanAction(action="generate_recommendations", plan_id=shorten_uuid(plan_id)),
+                    "callback_data": PlanAction(action="update_recommendations", plan_id=shorten_uuid(plan_id)),
                 }
             )
         else:
@@ -84,11 +86,17 @@ def create_plan_keyboard(plan_id: UUID, is_complete: bool, has_description: bool
     else:
         actions.append({"text": FILL_PLAN, "callback_data": PlanAction(action="fill", plan_id=shorten_uuid(plan_id))})
 
+    # Add delete chat button
+    actions.append({
+        "text": DELETE_CHAT, 
+        "callback_data": ChatAction(action="delete", chat_id=shorten_uuid(chat_id))
+    })
+    
     actions.append({"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)})
 
     return InlineConstructor._create_kb(
         actions=actions,
-        schema=[1, 1],
+        schema=[1, 1, 1],
     )
 
 
@@ -181,6 +189,16 @@ def create_exercises_keyboard(exercises: list[ExerciseData], plan_id: UUID) -> I
 
 
 def create_disease_input_keyboard() -> InlineKeyboardMarkup:
+    return InlineConstructor._create_kb(
+        actions=[
+            {"text": SKIP_STEP, "callback_data": Action(action=SKIP_STEP)},
+            {"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)},
+        ],
+        schema=[1, 1],
+    )
+
+
+def create_preferences_input_keyboard() -> InlineKeyboardMarkup:
     return InlineConstructor._create_kb(
         actions=[
             {"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)},

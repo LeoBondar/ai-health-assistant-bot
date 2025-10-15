@@ -5,6 +5,7 @@ from aiohttp import ClientResponse, ClientTimeout, TCPConnector
 
 from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCAddChatCommand,
+    AIHCDeleteChatCommand,
     AIHCAddMessageCommand,
     AIHCAddPlanDiseaseCommand,
     AIHCAddPlanExerciseCommand,
@@ -18,6 +19,7 @@ from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCGetRiskFactorsCommand,
     AIHCGetUserChatCommand,
     AIHCGetUserGoalsCommand,
+    AIHCUpdatePlanCommand,
 )
 from bot.infrastructure.http_client.base import BaseHTTPClient
 from bot.infrastructure.http_client.enums import RequestMethodType
@@ -31,6 +33,12 @@ class AIHealthHTTPClient(BaseHTTPClient):
             uri="/api/v1/chats/",
             method=RequestMethodType.POST,
             body=command.model_dump(),
+        )
+
+    async def delete_chat(self, command: AIHCDeleteChatCommand) -> ClientResponse:
+        return await self._make_request(
+            uri=f"/api/v1/chats/{command.chat_id}",
+            method=RequestMethodType.DELETE,
         )
 
     async def get_user_chat(self, command: AIHCGetUserChatCommand) -> ClientResponse:
@@ -120,6 +128,13 @@ class AIHealthHTTPClient(BaseHTTPClient):
         return await self._make_request(
             uri=f"/api/v1/chats/plans/{command.plan_id}/generate",
             method=RequestMethodType.POST,
+        )
+
+    async def update_plan(self, command: AIHCUpdatePlanCommand) -> ClientResponse:
+        return await self._make_request(
+            uri="/api/v1/chats/plans",
+            method=RequestMethodType.PUT,
+            body=command.model_dump(),
         )
 
     async def _make_request(

@@ -20,3 +20,7 @@ class PlanFillingStates(StatesGroup):
     choosing_place = State("choosing_place")
     choosing_exercise = State("choosing_exercise")
     plan_completed = State("plan_completed")
+
+
+class UpdatePlanStates(StatesGroup):
+    waiting_for_preferences = State("waiting_for_preferences")

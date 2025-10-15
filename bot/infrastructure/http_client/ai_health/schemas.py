@@ -9,6 +9,10 @@ class AIHCAddChatCommand(ApiCamelModel):
     use_context: bool = True
 
 
+class AIHCDeleteChatCommand(ApiCamelModel):
+    chat_id: str
+
+
 class AIHCGetUserChatCommand(ApiCamelModel):
     limit: int = 10
     offset: int = 0
@@ -72,3 +76,8 @@ class AIHCGetPlanInfoCommand(ApiCamelModel):
 
 class AIHCGeneratePlanCommand(ApiCamelModel):
     plan_id: str
+
+
+class AIHCUpdatePlanCommand(ApiCamelModel):
+    plan_id: str
+    comment: str

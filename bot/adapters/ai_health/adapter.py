@@ -4,6 +4,8 @@ from typing import Protocol
 from bot.adapters.ai_health.schemas import (
     AIAAddChatCommand,
     AIAAddChatResponse,
+    AIADeleteChatCommand,
+    AIADeleteChatResponse,
     AIAAddMessageCommand,
     AIAAddMessageResponse,
     AIAAddPlanDiseaseCommand,
@@ -30,10 +32,13 @@ from bot.adapters.ai_health.schemas import (
     AIAGetUserChatResponse,
     AIAGetUserGoalsCommand,
     AIAGetUserGoalsResponse,
+    AIAUpdatePlanCommand,
+    AIAUpdatePlanResponse,
 )
 from bot.infrastructure.http_client.ai_health.client import AIHealthHTTPClient
 from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCAddChatCommand,
+    AIHCDeleteChatCommand,
     AIHCAddMessageCommand,
     AIHCAddPlanDiseaseCommand,
     AIHCAddPlanExerciseCommand,
@@ -47,12 +52,16 @@ from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCGetRiskFactorsCommand,
     AIHCGetUserChatCommand,
     AIHCGetUserGoalsCommand,
+    AIHCUpdatePlanCommand,
 )
 
 
 class IAIHealthAdapter(Protocol):
 
     async def add_chat(self, command: AIAAddChatCommand) -> AIAAddChatResponse:
+        pass
+
+    async def delete_chat(self, command: AIADeleteChatCommand) -> AIADeleteChatResponse:
         pass
 
     async def get_chats(self, command: AIAGetUserChatCommand) -> AIAGetUserChatResponse:
@@ -94,6 +103,9 @@ class IAIHealthAdapter(Protocol):
     async def generate_plan(self, command: AIAGeneratePlanCommand) -> AIAGeneratePlanResponse:
         pass
 
+    async def update_plan(self, command: AIAUpdatePlanCommand) -> AIAUpdatePlanResponse:
+        pass
+
 
 class AIHealthAdapter(IAIHealthAdapter):
     def __init__(self, client: AIHealthHTTPClient):
@@ -119,6 +131,12 @@ class AIHealthAdapter(IAIHealthAdapter):
         )
         body = json.loads(await response.text())
         return AIAAddChatResponse(**body["result"])
+
+    async def delete_chat(self, command: AIADeleteChatCommand) -> AIADeleteChatResponse:
+        await self._client.delete_chat(
+            command=AIHCDeleteChatCommand(chat_id=str(command.chat_id))
+        )
+        return AIADeleteChatResponse()
 
     async def get_risk_factors(self, command: AIAGetRiskFactorsCommand) -> AIAGetRiskFactorsResponse:
         response = await self._client.get_risk_factors(
@@ -192,3 +210,10 @@ class AIHealthAdapter(IAIHealthAdapter):
         response = await self._client.generate_plan(command=AIHCGeneratePlanCommand(plan_id=str(command.plan_id)))
         body = json.loads(await response.text())
         return AIAGeneratePlanResponse(**body["result"])
+
+    async def update_plan(self, command: AIAUpdatePlanCommand) -> AIAUpdatePlanResponse:
+        response = await self._client.update_plan(
+            command=AIHCUpdatePlanCommand(plan_id=str(command.plan_id), comment=command.comment)
+        )
+        body = json.loads(await response.text())
+        return AIAUpdatePlanResponse(**body["result"])
