@@ -20,6 +20,11 @@ from bot.common.keyboards.keys import (
     BACK_TO_MENU,
     CANCEL,
     CREATE_CHAT,
+    EDIT_DISEASE,
+    EDIT_EXERCISE,
+    EDIT_GOAL,
+    EDIT_PLACE,
+    EDIT_RISK_FACTOR,
     FILL_PLAN,
     GET_RECOMMENDATIONS,
     SKIP_STEP,
@@ -79,12 +84,12 @@ from bot.fsm.managers.main_menu import FSMMainMenuManager
 from bot.fsm.states import ActiveChatStates, CreateChatStates, PlanFillingStates, UpdatePlanStates
 from bot.utils.plan_helper import PlanFillingHelper
 from bot.views.service.add_chat import AddChatView
-from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.add_plan_disease import AddPlanDiseaseView
 from bot.views.service.add_plan_exercise import AddPlanExerciseView
 from bot.views.service.add_plan_factor import AddPlanFactorView
 from bot.views.service.add_plan_goal import AddPlanGoalView
 from bot.views.service.add_plan_place import AddPlanPlaceView
+from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.generate_plan import GeneratePlanView
 from bot.views.service.get_chats import GetUserChatsView
 from bot.views.service.get_exercises import GetExercisesView
@@ -293,19 +298,21 @@ async def handle_delete_chat(
 ) -> None:
     try:
         chat_id = await safe_get_full_uuid(callback_data.chat_id, callback.from_user.id, get_chats_view)
-        
+
         await delete_chat_view(chat_id)
-        
+
         await FSMMainMenuManager.reset_main_menu_state(state)
-        
+
         user_chats_response = await get_chats_view(callback.from_user.id)
         keyboard = create_main_menu_keyboard(user_chats_response.chats)
-        
+
         if callback.message:
-            await callback.message.edit_text("✅ Chat deleted successfully!\n\n" + GREETINGS_MESSAGE, reply_markup=keyboard)
-        
+            await callback.message.edit_text(
+                "✅ Chat deleted successfully!\n\n" + GREETINGS_MESSAGE, reply_markup=keyboard
+            )
+
         await callback.answer("Chat deleted successfully!")
-        
+
     except Exception as e:
         await callback.answer(f"Error deleting chat: {str(e)}")
 
@@ -552,6 +559,7 @@ async def handle_factor_selection(
     add_plan_factor_view: AddPlanFactorView = Provide[DIContainer.add_plan_factor_view],
     get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
     get_risk_factors_view: GetRiskFactorsView = Provide[DIContainer.get_risk_factors_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         plan_id, factor_id = await safe_get_factor_uuids(
@@ -565,7 +573,25 @@ async def handle_factor_selection(
         await add_plan_factor_view(plan_id, factor_id)
         await callback.answer(FACTOR_ADDED_MESSAGE)
 
-        await start_disease_input(callback, state)
+        # Check if this is an edit operation (plan already complete)
+        plan_info = await get_plan_info_view(plan_id)
+        if PlanFillingHelper.is_plan_complete(plan_info):
+            # Return to plan view for complete plan
+            plan_text = PlanFillingHelper.format_plan_info(plan_info)
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+
+            message_text = (
+                f"✅ Risk factor updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            )
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+
+            if callback.message:
+                await callback.message.edit_text(message_text, reply_markup=keyboard)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # Continue with normal flow for new plan
+            await start_disease_input(callback, state)
 
     except Exception as e:
         await callback.answer(f"Error adding factor: {str(e)}")
@@ -579,6 +605,8 @@ async def handle_skip_disease(
     state: FSMContext,
     add_plan_disease_view: AddPlanDiseaseView = Provide[DIContainer.add_plan_disease_view],
     get_user_goals_view: GetUserGoalsView = Provide[DIContainer.get_user_goals_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
 ) -> None:
     try:
         current_state = await state.get_state()
@@ -591,18 +619,36 @@ async def handle_skip_disease(
 
         await add_plan_disease_view(plan_id, "don't have")
 
-        goals_response = await get_user_goals_view()
+        # Check if this is an edit operation (plan already complete)
+        plan_info = await get_plan_info_view(plan_id)
+        if PlanFillingHelper.is_plan_complete(plan_info):
+            # Return to plan view for complete plan
+            plan_text = PlanFillingHelper.format_plan_info(plan_info)
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
 
-        for goal in goals_response.goals:
-            register_uuid_mapping(goal.id)
-        register_uuid_mapping(plan_id)
+            message_text = f"✅ Disease updated (skipped)!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
 
-        keyboard = create_goals_keyboard(goals_response.goals, plan_id)
+            if callback.message:
+                await callback.message.edit_text(message_text, reply_markup=keyboard)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # Continue with normal flow for new plan
+            goals_response = await get_user_goals_view()
 
-        await state.set_state(PlanFillingStates.choosing_goal)
+            for goal in goals_response.goals:
+                register_uuid_mapping(goal.id)
+            register_uuid_mapping(plan_id)
 
-        if callback.message:
-            await callback.message.edit_text(f"{STEP_SKIPPED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+            keyboard = create_goals_keyboard(goals_response.goals, plan_id)
+
+            await state.set_state(PlanFillingStates.choosing_goal)
+
+            if callback.message:
+                await callback.message.edit_text(
+                    f"{STEP_SKIPPED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard
+                )
 
         await callback.answer()
 
@@ -617,6 +663,8 @@ async def handle_disease_input(
     state: FSMContext,
     add_plan_disease_view: AddPlanDiseaseView = Provide[DIContainer.add_plan_disease_view],
     get_user_goals_view: GetUserGoalsView = Provide[DIContainer.get_user_goals_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
 ) -> None:
     if not message.text:
         await message.answer(ERROR_TEXT_ONLY_MESSAGE)
@@ -633,17 +681,34 @@ async def handle_disease_input(
 
         await add_plan_disease_view(plan_id, disease_name)
 
-        goals_response = await get_user_goals_view()
+        # Check if this is an edit operation (plan already complete)
+        plan_info = await get_plan_info_view(plan_id)
+        if PlanFillingHelper.is_plan_complete(plan_info):
+            # Return to plan view for complete plan
+            plan_text = PlanFillingHelper.format_plan_info(plan_info)
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            chat_id = await get_chat_id_by_plan_id(plan_id, message.from_user.id, get_chats_view)
 
-        for goal in goals_response.goals:
-            register_uuid_mapping(goal.id)
-        register_uuid_mapping(plan_id)
+            message_text = (
+                f"✅ Disease updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            )
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
 
-        keyboard = create_goals_keyboard(goals_response.goals, plan_id)
+            await message.answer(message_text, reply_markup=keyboard)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # Continue with normal flow for new plan
+            goals_response = await get_user_goals_view()
 
-        await state.set_state(PlanFillingStates.choosing_goal)
+            for goal in goals_response.goals:
+                register_uuid_mapping(goal.id)
+            register_uuid_mapping(plan_id)
 
-        await message.answer(f"{DISEASE_ADDED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+            keyboard = create_goals_keyboard(goals_response.goals, plan_id)
+
+            await state.set_state(PlanFillingStates.choosing_goal)
+
+            await message.answer(f"{DISEASE_ADDED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
 
     except Exception as e:
         await message.answer(f"Error adding disease: {str(e)}")
@@ -658,6 +723,7 @@ async def handle_goal_selection(
     add_plan_goal_view: AddPlanGoalView = Provide[DIContainer.add_plan_goal_view],
     get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
     get_user_goals_view: GetUserGoalsView = Provide[DIContainer.get_user_goals_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         plan_id, goal_id = await safe_get_goal_uuids(
@@ -671,7 +737,25 @@ async def handle_goal_selection(
         await add_plan_goal_view(plan_id, goal_id)
         await callback.answer(GOAL_ADDED_MESSAGE)
 
-        await start_place_selection(callback, plan_id, state)
+        # Check if this is an edit operation (plan already complete)
+        plan_info = await get_plan_info_view(plan_id)
+        if PlanFillingHelper.is_plan_complete(plan_info):
+            # Return to plan view for complete plan
+            plan_text = PlanFillingHelper.format_plan_info(plan_info)
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+
+            message_text = (
+                f"✅ Goal updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            )
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+
+            if callback.message:
+                await callback.message.edit_text(message_text, reply_markup=keyboard)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # Continue with normal flow for new plan
+            await start_place_selection(callback, plan_id, state)
 
     except Exception as e:
         await callback.answer(f"Error adding goal: {str(e)}")
@@ -686,6 +770,7 @@ async def handle_place_selection(
     add_plan_place_view: AddPlanPlaceView = Provide[DIContainer.add_plan_place_view],
     get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
     get_places_view: GetPlacesView = Provide[DIContainer.get_places_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         plan_id, place_id = await safe_get_place_uuids(
@@ -699,7 +784,25 @@ async def handle_place_selection(
         await add_plan_place_view(plan_id, place_id)
         await callback.answer(PLACE_ADDED_MESSAGE)
 
-        await start_exercise_selection(callback, plan_id, state)
+        # Check if this is an edit operation (plan already complete)
+        plan_info = await get_plan_info_view(plan_id)
+        if PlanFillingHelper.is_plan_complete(plan_info):
+            # Return to plan view for complete plan
+            plan_text = PlanFillingHelper.format_plan_info(plan_info)
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+
+            message_text = (
+                f"✅ Place updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            )
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+
+            if callback.message:
+                await callback.message.edit_text(message_text, reply_markup=keyboard)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # Continue with normal flow for new plan
+            await start_exercise_selection(callback, plan_id, state)
 
     except Exception as e:
         await callback.answer(f"Error adding place: {str(e)}")
@@ -717,6 +820,7 @@ async def handle_exercise_selection(
     get_exercises_view: GetExercisesView = Provide[DIContainer.get_exercises_view],
 ) -> None:
     try:
+        # First get the old plan info to check if it was already complete
         plan_id, exercise_id = await safe_get_exercise_uuids(
             callback_data.plan_id,
             callback_data.exercise_id,
@@ -725,20 +829,29 @@ async def handle_exercise_selection(
             get_exercises_view,
         )
 
+        old_plan_info = await get_plan_info_view(plan_id)
+        was_complete = PlanFillingHelper.is_plan_complete(old_plan_info)
+
         await add_plan_exercise_view(plan_id, exercise_id)
         await callback.answer(EXERCISE_ADDED_MESSAGE)
 
         plan_info = await get_plan_info_view(plan_id)
         plan_text = PlanFillingHelper.format_plan_info(plan_info)
-
-        message_text = (
-            f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
-        )
-        # Get chat_id by plan_id
         chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
-        keyboard = create_plan_keyboard(plan_id, chat_id, True, False)
 
-        await state.set_state(PlanFillingStates.plan_completed)
+        if was_complete:
+            # This was an edit operation
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            message_text = (
+                f"✅ Exercise updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            )
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # This was the completion of a new plan
+            message_text = f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, False)
+            await state.set_state(PlanFillingStates.plan_completed)
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -801,7 +914,7 @@ async def handle_generate_recommendations(
             if is_complete:
                 message_text += f"\n\n{PLAN_READY_MESSAGE}"
 
-            # Get chat_id by plan_id  
+            # Get chat_id by plan_id
             chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
             keyboard = create_plan_keyboard(plan_id, chat_id, is_complete, has_description)
             if callback.message:
@@ -826,7 +939,7 @@ async def handle_update_recommendations(
         if not PlanFillingHelper.is_plan_complete(plan_info):
             await callback.answer("Please complete the entire plan first!")
             return
-        
+
         if not (plan_info.description and len(plan_info.description.strip()) > 0):
             await callback.answer("Plan must have recommendations to update them!")
             return
@@ -875,7 +988,7 @@ async def handle_preferences_input(
         plan_text = PlanFillingHelper.format_plan_info(updated_plan_info)
 
         message_text = f"{PLAN_UPDATED_SUCCESS_MESSAGE}\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}"
-        # Get chat_id by plan_id  
+        # Get chat_id by plan_id
         chat_id = await get_chat_id_by_plan_id(plan_id, message.from_user.id, get_chats_view)
         keyboard = create_plan_keyboard(plan_id, chat_id, True, True)
 
@@ -887,6 +1000,88 @@ async def handle_preferences_input(
     except Exception as e:
         await message.answer(f"Error updating plan: {str(e)}")
         await FSMMainMenuManager.reset_main_menu_state(state)
+
+
+# Edit plan parameter handlers
+@router.callback_query(PlanAction.filter(F.action == "edit_risk_factor"))
+@inject
+async def handle_edit_risk_factor(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await start_factor_selection(callback, plan_id, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@router.callback_query(PlanAction.filter(F.action == "edit_disease"))
+@inject
+async def handle_edit_disease(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await state.update_data(plan_id=str(plan_id))
+        await start_disease_input(callback, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@router.callback_query(PlanAction.filter(F.action == "edit_goal"))
+@inject
+async def handle_edit_goal(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await start_goal_selection(callback, plan_id, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@router.callback_query(PlanAction.filter(F.action == "edit_place"))
+@inject
+async def handle_edit_place(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await start_place_selection(callback, plan_id, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@router.callback_query(PlanAction.filter(F.action == "edit_exercise"))
+@inject
+async def handle_edit_exercise(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await start_exercise_selection(callback, plan_id, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
 
 
 @router.message(ActiveChatStates.in_chat)

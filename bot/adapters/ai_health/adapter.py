@@ -4,8 +4,6 @@ from typing import Protocol
 from bot.adapters.ai_health.schemas import (
     AIAAddChatCommand,
     AIAAddChatResponse,
-    AIADeleteChatCommand,
-    AIADeleteChatResponse,
     AIAAddMessageCommand,
     AIAAddMessageResponse,
     AIAAddPlanDiseaseCommand,
@@ -18,6 +16,8 @@ from bot.adapters.ai_health.schemas import (
     AIAAddPlanGoalResponse,
     AIAAddPlanPlaceCommand,
     AIAAddPlanPlaceResponse,
+    AIADeleteChatCommand,
+    AIADeleteChatResponse,
     AIAGeneratePlanCommand,
     AIAGeneratePlanResponse,
     AIAGetExercisesCommand,
@@ -38,13 +38,13 @@ from bot.adapters.ai_health.schemas import (
 from bot.infrastructure.http_client.ai_health.client import AIHealthHTTPClient
 from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCAddChatCommand,
-    AIHCDeleteChatCommand,
     AIHCAddMessageCommand,
     AIHCAddPlanDiseaseCommand,
     AIHCAddPlanExerciseCommand,
     AIHCAddPlanFactorCommand,
     AIHCAddPlanGoalCommand,
     AIHCAddPlanPlaceCommand,
+    AIHCDeleteChatCommand,
     AIHCGeneratePlanCommand,
     AIHCGetExercisesCommand,
     AIHCGetPlacesCommand,
@@ -133,9 +133,7 @@ class AIHealthAdapter(IAIHealthAdapter):
         return AIAAddChatResponse(**body["result"])
 
     async def delete_chat(self, command: AIADeleteChatCommand) -> AIADeleteChatResponse:
-        await self._client.delete_chat(
-            command=AIHCDeleteChatCommand(chat_id=str(command.chat_id))
-        )
+        await self._client.delete_chat(command=AIHCDeleteChatCommand(chat_id=str(command.chat_id)))
         return AIADeleteChatResponse()
 
     async def get_risk_factors(self, command: AIAGetRiskFactorsCommand) -> AIAGetRiskFactorsResponse:

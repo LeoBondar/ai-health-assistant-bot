@@ -5,13 +5,13 @@ from aiohttp import ClientResponse, ClientTimeout, TCPConnector
 
 from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCAddChatCommand,
-    AIHCDeleteChatCommand,
     AIHCAddMessageCommand,
     AIHCAddPlanDiseaseCommand,
     AIHCAddPlanExerciseCommand,
     AIHCAddPlanFactorCommand,
     AIHCAddPlanGoalCommand,
     AIHCAddPlanPlaceCommand,
+    AIHCDeleteChatCommand,
     AIHCGeneratePlanCommand,
     AIHCGetExercisesCommand,
     AIHCGetPlacesCommand,

@@ -6,12 +6,12 @@ from bot.infrastructure.http_client.enums import ClientsEnum
 from bot.infrastructure.http_client.factory import HttpClientsFactory
 from bot.settings import Settings
 from bot.views.service.add_chat import AddChatView
-from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.add_plan_disease import AddPlanDiseaseView
 from bot.views.service.add_plan_exercise import AddPlanExerciseView
 from bot.views.service.add_plan_factor import AddPlanFactorView
 from bot.views.service.add_plan_goal import AddPlanGoalView
 from bot.views.service.add_plan_place import AddPlanPlaceView
+from bot.views.service.delete_chat import DeleteChatView
 from bot.views.service.generate_plan import GeneratePlanView
 from bot.views.service.get_chats import GetUserChatsView
 from bot.views.service.get_exercises import GetExercisesView
@@ -74,6 +74,4 @@ class DIContainer(containers.DeclarativeContainer):
     generate_plan_view: providers.Factory[GeneratePlanView] = providers.Factory(
         GeneratePlanView, adapter=ai_health_adapter
     )
-    update_plan_view: providers.Factory[UpdatePlanView] = providers.Factory(
-        UpdatePlanView, adapter=ai_health_adapter
-    )
+    update_plan_view: providers.Factory[UpdatePlanView] = providers.Factory(UpdatePlanView, adapter=ai_health_adapter)
