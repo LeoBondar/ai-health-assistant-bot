@@ -5,7 +5,6 @@ import structlog
 
 from bot.settings import settings
 
-
 def setup_logger() -> structlog.typing.FilteringBoundLogger:
     logging.basicConfig(
         level=settings.logging.level,

@@ -1,7 +1,6 @@
 class BaseAiogramBotTemplateError(Exception):
     pass
 
-
 class DetailedAiogramBotTemplateError(BaseAiogramBotTemplateError):
 
     def __init__(self, message: str) -> None:

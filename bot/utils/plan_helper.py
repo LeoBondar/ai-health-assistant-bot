@@ -4,7 +4,6 @@ from uuid import UUID
 from bot.adapters.ai_health.schemas import AIAGetPlanInfoResponse
 from bot.fsm.states import PlanFillingStates
 
-
 class PlanFillingHelper:
 
     @staticmethod

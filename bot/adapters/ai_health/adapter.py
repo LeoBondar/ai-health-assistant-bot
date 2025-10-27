@@ -55,7 +55,6 @@ from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCUpdatePlanCommand,
 )
 
-
 class IAIHealthAdapter(Protocol):
 
     async def add_chat(self, command: AIAAddChatCommand) -> AIAAddChatResponse:
@@ -105,7 +104,6 @@ class IAIHealthAdapter(Protocol):
 
     async def update_plan(self, command: AIAUpdatePlanCommand) -> AIAUpdatePlanResponse:
         pass
-
 
 class AIHealthAdapter(IAIHealthAdapter):
     def __init__(self, client: AIHealthHTTPClient):

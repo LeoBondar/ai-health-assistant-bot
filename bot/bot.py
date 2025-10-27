@@ -31,17 +31,14 @@ dp = Dispatcher(
     ),
 )
 
-
 def setup_logging(dp: Dispatcher) -> None:
     dp["infrastructure"] = utils.logging.setup_logger().bind(type="infrastructure")
     dp["db_logger"] = utils.logging.setup_logger().bind(type="db")
     dp["cache_logger"] = utils.logging.setup_logger().bind(type="cache")
     dp["business_logger"] = utils.logging.setup_logger().bind(type="business")
 
-
 def setup_middlewares(dp: Dispatcher) -> None:
     pass
-
 
 async def setup_bot() -> tuple[Dispatcher, Bot]:
     container = DIContainer()
@@ -64,7 +61,6 @@ async def setup_bot() -> tuple[Dispatcher, Bot]:
 
     await bot.delete_webhook(drop_pending_updates=settings.bot.drop_pending_updates)
     return dp, bot
-
 
 async def main() -> None:
     dp, bot = await setup_bot()

@@ -11,7 +11,6 @@ from aiohttp.typedefs import LooseCookies, LooseHeaders, StrOrURL
 from bot.infrastructure.http_client.enums import ClientsEnum, RequestMethodType
 from bot.infrastructure.http_client.exceptions import ClientException
 
-
 class BaseHTTPClient(ABC):
     def __init__(self, client_name: ClientsEnum, session: ClientSession):
         self._client_name = client_name

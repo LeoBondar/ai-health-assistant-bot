@@ -10,7 +10,6 @@ from bot.infrastructure.http_client.ai_health.client import AIHealthHTTPClient
 from bot.infrastructure.http_client.base import BaseHTTPClient
 from bot.infrastructure.http_client.enums import ClientsEnum
 
-
 class HttpClientsFactory:
     _clients_mapping: dict[ClientsEnum, Type[BaseHTTPClient]] = {
         ClientsEnum.AI_HEALTH: AIHealthHTTPClient,

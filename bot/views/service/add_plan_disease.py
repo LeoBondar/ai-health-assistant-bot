@@ -3,7 +3,6 @@ from uuid import UUID
 from bot.adapters.ai_health.adapter import AIHealthAdapter
 from bot.adapters.ai_health.schemas import AIAAddPlanDiseaseCommand, AIAAddPlanDiseaseResponse
 
-
 class AddPlanDiseaseView:
     def __init__(self, adapter: AIHealthAdapter):
         self._adapter = adapter

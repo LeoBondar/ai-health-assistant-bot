@@ -2,7 +2,6 @@ from aiogram.fsm.context import FSMContext
 
 from bot.fsm.states import MainMenuStates
 
-
 class FSMMainMenuManager:
     @staticmethod
     async def set_main_menu_state(state: FSMContext) -> None:

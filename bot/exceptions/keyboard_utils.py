@@ -2,7 +2,6 @@ from collections.abc import Sequence
 
 from .base import DetailedAiogramBotTemplateError
 
-
 class UnknownKeyboardButtonPropertyError(DetailedAiogramBotTemplateError):
     def __init__(
         self,
@@ -15,7 +14,6 @@ class UnknownKeyboardButtonPropertyError(DetailedAiogramBotTemplateError):
         self.property_value = property_value
         self.known_properties = known_properties
 
-
 class NotEnoughArgsToCreateButtonError(DetailedAiogramBotTemplateError):
     def __init__(
         self,
@@ -25,7 +23,6 @@ class NotEnoughArgsToCreateButtonError(DetailedAiogramBotTemplateError):
         super().__init__(message="Not enough args to create button")
         self.provided_args = provided_args
         self.required_args = required_args
-
 
 class TooManyArgsToCreateButtonError(DetailedAiogramBotTemplateError):
     def __init__(
@@ -38,11 +35,9 @@ class TooManyArgsToCreateButtonError(DetailedAiogramBotTemplateError):
         self.provided_args_amount = len(self.provided_args)
         self.max_args_amount = max_args_amount
 
-
 class PaymentButtonMustBeFirstError(DetailedAiogramBotTemplateError):
     def __init__(self) -> None:
         super().__init__(message="Payment button must be first in keyboard")
-
 
 class WrongKeyboardSchemaError(DetailedAiogramBotTemplateError):
     def __init__(self, schema_size: int, buttons_count: int) -> None:

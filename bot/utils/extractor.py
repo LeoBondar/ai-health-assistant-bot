@@ -6,13 +6,11 @@ import zipfile
 
 import aiohttp
 
-
 def extract_words(input: str) -> list[str]:
     pattern = r'\b[\w.-]+@[\w.-]+\.\w+\b|\b\w+\b'
     matches = re.findall(pattern, input)
 
     return matches
-
 
 def extract_words_tab(input: str) -> list[str]:
     lines = input.splitlines()
@@ -21,7 +19,6 @@ def extract_words_tab(input: str) -> list[str]:
         if line.strip():
             line_list.append(line.strip())
     return line_list
-
 
 async def download_and_extract_zip(url: str) -> list[str]:
     files = []

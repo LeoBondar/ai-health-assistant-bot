@@ -5,7 +5,6 @@ from bot import exceptions
 
 T = TypeVar("T")
 
-
 def create_keyboard_layout(buttons: Sequence[T], count: Sequence[int]) -> list[list[T]]:
     if sum(count) != len(buttons):
         raise exceptions.WrongKeyboardSchemaError(

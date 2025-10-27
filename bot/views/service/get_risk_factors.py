@@ -1,7 +1,6 @@
 from bot.adapters.ai_health.adapter import AIHealthAdapter
 from bot.adapters.ai_health.schemas import AIAGetRiskFactorsCommand, AIAGetRiskFactorsResponse
 
-
 class GetRiskFactorsView:
     def __init__(self, adapter: AIHealthAdapter):
         self._adapter = adapter

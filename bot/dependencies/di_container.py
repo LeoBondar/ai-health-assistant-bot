@@ -22,7 +22,6 @@ from bot.views.service.get_user_goals import GetUserGoalsView
 from bot.views.service.send_message import AddChatMessageView
 from bot.views.service.update_plan import UpdatePlanView
 
-
 class DIContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(packages=["bot.handlers", __name__])
     settings: providers.Singleton[Settings] = providers.Singleton(Settings)

@@ -30,7 +30,6 @@ from bot.common.keyboards.keys import (
     UPDATE_RECOMMENDATIONS,
 )
 
-
 def create_main_menu_keyboard(user_chats: list[ChatData]) -> InlineKeyboardMarkup:
     actions = []
 
@@ -55,20 +54,17 @@ def create_main_menu_keyboard(user_chats: list[ChatData]) -> InlineKeyboardMarku
         schema=schema,
     )
 
-
 def create_cancel_keyboard() -> InlineKeyboardMarkup:
     return InlineConstructor._create_kb(
         actions=[{"text": CANCEL, "callback_data": Action(action=CANCEL)}],
         schema=[1],
     )
 
-
 def create_chat_keyboard() -> InlineKeyboardMarkup:
     return InlineConstructor._create_kb(
         actions=[{"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)}],
         schema=[1],
     )
-
 
 def create_plan_keyboard(
     plan_id: UUID, chat_id: UUID, is_complete: bool, has_description: bool
@@ -91,7 +87,6 @@ def create_plan_keyboard(
                 }
             )
 
-        # Add edit parameter buttons when plan is complete
         actions.extend(
             [
                 {
@@ -119,23 +114,21 @@ def create_plan_keyboard(
     else:
         actions.append({"text": FILL_PLAN, "callback_data": PlanAction(action="fill", plan_id=shorten_uuid(plan_id))})
 
-    # Add delete chat button
     actions.append({"text": DELETE_CHAT, "callback_data": ChatAction(action="delete", chat_id=shorten_uuid(chat_id))})
 
     actions.append({"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)})
 
     if is_complete:
-        # Schema for complete plan: recommendations button + 5 edit buttons (2 rows of 2, 1 row of 1) + delete + back
+
         schema = [1, 2, 2, 1, 1, 1]
     else:
-        # Schema for incomplete plan: fill button + delete + back
+
         schema = [1, 1, 1]
 
     return InlineConstructor._create_kb(
         actions=actions,
         schema=schema,
     )
-
 
 def create_factors_keyboard(factors: list[RiskFactorData], plan_id: UUID) -> InlineKeyboardMarkup:
     actions = []
@@ -158,7 +151,6 @@ def create_factors_keyboard(factors: list[RiskFactorData], plan_id: UUID) -> Inl
         schema=schema,
     )
 
-
 def create_goals_keyboard(goals: list[UserGoalData], plan_id: UUID) -> InlineKeyboardMarkup:
     actions = []
 
@@ -179,7 +171,6 @@ def create_goals_keyboard(goals: list[UserGoalData], plan_id: UUID) -> InlineKey
         actions=actions,
         schema=schema,
     )
-
 
 def create_places_keyboard(places: list[PlaceData], plan_id: UUID) -> InlineKeyboardMarkup:
     actions = []
@@ -202,7 +193,6 @@ def create_places_keyboard(places: list[PlaceData], plan_id: UUID) -> InlineKeyb
         schema=schema,
     )
 
-
 def create_exercises_keyboard(exercises: list[ExerciseData], plan_id: UUID) -> InlineKeyboardMarkup:
     actions = []
 
@@ -224,7 +214,6 @@ def create_exercises_keyboard(exercises: list[ExerciseData], plan_id: UUID) -> I
         schema=schema,
     )
 
-
 def create_disease_input_keyboard() -> InlineKeyboardMarkup:
     return InlineConstructor._create_kb(
         actions=[
@@ -233,7 +222,6 @@ def create_disease_input_keyboard() -> InlineKeyboardMarkup:
         ],
         schema=[1, 1],
     )
-
 
 def create_preferences_input_keyboard() -> InlineKeyboardMarkup:
     return InlineConstructor._create_kb(

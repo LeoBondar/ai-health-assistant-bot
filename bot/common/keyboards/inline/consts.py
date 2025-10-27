@@ -18,7 +18,6 @@ POSSIBLE_BUTTON_PROPERTIES_VALUES = (
 )
 POSSIBLE_INPUT_ACTIONS_TYPES = dict[str, POSSIBLE_BUTTON_PROPERTIES_VALUES]
 
-
 class InlineConstructor:
     aliases = MappingProxyType(
         {

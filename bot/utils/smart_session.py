@@ -8,7 +8,6 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import RestartingTelegram, TelegramRetryAfter, TelegramServerError
 from aiogram.methods.base import TelegramMethod, TelegramType
 
-
 class StructLogAiogramAiohttpSessions(AiohttpSession):
     def __init__(
         self,
@@ -40,7 +39,6 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
             raise
 
         return res
-
 
 class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
     async def make_request(

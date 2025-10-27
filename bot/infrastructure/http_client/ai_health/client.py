@@ -25,7 +25,6 @@ from bot.infrastructure.http_client.base import BaseHTTPClient
 from bot.infrastructure.http_client.enums import RequestMethodType
 from bot.settings import settings
 
-
 class AIHealthHTTPClient(BaseHTTPClient):
 
     async def add_user_chat(self, command: AIHCAddChatCommand) -> ClientResponse:

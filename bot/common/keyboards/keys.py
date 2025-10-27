@@ -9,7 +9,6 @@ GET_RECOMMENDATIONS = "💡 Get Recommendations"
 UPDATE_RECOMMENDATIONS = "🔄 Update Recommendations"
 SKIP_STEP = "⏭️ Skip"
 
-# Edit plan parameter buttons
 EDIT_RISK_FACTOR = "🔍 Change Risk Factor"
 EDIT_DISEASE = "🏥 Change Disease"
 EDIT_GOAL = "🎯 Change Goal"

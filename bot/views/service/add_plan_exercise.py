@@ -3,7 +3,6 @@ from uuid import UUID
 from bot.adapters.ai_health.adapter import AIHealthAdapter
 from bot.adapters.ai_health.schemas import AIAAddPlanExerciseCommand, AIAAddPlanExerciseResponse
 
-
 class AddPlanExerciseView:
     def __init__(self, adapter: AIHealthAdapter):
         self._adapter = adapter
