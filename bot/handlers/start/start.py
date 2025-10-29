@@ -467,13 +467,26 @@ async def start_factor_selection(
         await callback.answer(f"Error getting risk factors: {str(e)}")
 
 
-async def start_disease_input(callback: types.CallbackQuery, state: FSMContext) -> None:
+@inject
+async def start_disease_input(
+    callback: types.CallbackQuery, 
+    state: FSMContext,
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+) -> None:
     await state.set_state(PlanFillingStates.entering_disease)
 
     keyboard = create_disease_input_keyboard()
+    
+    # Get current plan info and format partial plan
+    data = await state.get_data()
+    plan_id = UUID(data.get("plan_id"))
+    plan_info = await get_plan_info_view(plan_id)
+    partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
+    
+    message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{ENTER_DISEASE_MESSAGE}"
 
     if callback.message:
-        await callback.message.edit_text(ENTER_DISEASE_MESSAGE, reply_markup=keyboard)
+        await callback.message.edit_text(message_text, reply_markup=keyboard)
 
 
 @inject
@@ -482,6 +495,7 @@ async def start_goal_selection(
     plan_id: UUID,
     state: FSMContext,
     get_user_goals_view: GetUserGoalsView = Provide[DIContainer.get_user_goals_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         goals_response = await get_user_goals_view()
@@ -494,9 +508,15 @@ async def start_goal_selection(
 
         await state.set_state(PlanFillingStates.choosing_goal)
         await state.update_data(plan_id=str(plan_id))
+        
+        # Get current plan info and format partial plan
+        plan_info = await get_plan_info_view(plan_id)
+        partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
+        
+        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}"
 
         if callback.message:
-            await callback.message.edit_text(CHOOSE_GOAL_MESSAGE, reply_markup=keyboard)
+            await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
         await callback.answer(f"Error getting goals: {str(e)}")
@@ -508,6 +528,7 @@ async def start_place_selection(
     plan_id: UUID,
     state: FSMContext,
     get_places_view: GetPlacesView = Provide[DIContainer.get_places_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         places_response = await get_places_view()
@@ -520,9 +541,15 @@ async def start_place_selection(
 
         await state.set_state(PlanFillingStates.choosing_place)
         await state.update_data(plan_id=str(plan_id))
+        
+        # Get current plan info and format partial plan
+        plan_info = await get_plan_info_view(plan_id)
+        partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
+        
+        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_PLACE_MESSAGE}"
 
         if callback.message:
-            await callback.message.edit_text(CHOOSE_PLACE_MESSAGE, reply_markup=keyboard)
+            await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
         await callback.answer(f"Error getting places: {str(e)}")
@@ -534,6 +561,7 @@ async def start_exercise_selection(
     plan_id: UUID,
     state: FSMContext,
     get_exercises_view: GetExercisesView = Provide[DIContainer.get_exercises_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         exercises_response = await get_exercises_view()
@@ -546,9 +574,15 @@ async def start_exercise_selection(
 
         await state.set_state(PlanFillingStates.choosing_exercise)
         await state.update_data(plan_id=str(plan_id))
+        
+        # Get current plan info and format partial plan
+        plan_info = await get_plan_info_view(plan_id)
+        partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
+        
+        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_MESSAGE}"
 
         if callback.message:
-            await callback.message.edit_text(CHOOSE_EXERCISE_MESSAGE, reply_markup=keyboard)
+            await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
         await callback.answer(f"Error getting exercises: {str(e)}")
@@ -648,10 +682,14 @@ async def handle_skip_disease(
             keyboard = create_goals_keyboard(goals_response.goals, plan_id)
 
             await state.set_state(PlanFillingStates.choosing_goal)
+            
+            # Get updated plan info with skipped disease
+            updated_plan_info = await get_plan_info_view(plan_id)
+            partial_plan_text = PlanFillingHelper.format_partial_plan_info(updated_plan_info)
 
             if callback.message:
                 await callback.message.edit_text(
-                    f"{STEP_SKIPPED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard
+                    f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard
                 )
 
         await callback.answer()
@@ -711,8 +749,12 @@ async def handle_disease_input(
             keyboard = create_goals_keyboard(goals_response.goals, plan_id)
 
             await state.set_state(PlanFillingStates.choosing_goal)
+            
+            # Get updated plan info with disease
+            updated_plan_info = await get_plan_info_view(plan_id)
+            partial_plan_text = PlanFillingHelper.format_partial_plan_info(updated_plan_info)
 
-            await message.answer(f"{DISEASE_ADDED_MESSAGE}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+            await message.answer(f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
 
     except Exception as e:
         await message.answer(f"Error adding disease: {str(e)}")
@@ -851,12 +893,12 @@ async def handle_exercise_selection(
             )
             keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
             await FSMMainMenuManager.reset_main_menu_state(state)
+            
+            if callback.message:
+                await callback.message.edit_text(message_text, reply_markup=keyboard)
         else:
             # Continue to exercise type selection for new plan
             await start_exercise_type_selection(callback, plan_id, state)
-
-        if callback.message:
-            await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
         await callback.answer(f"Error adding exercise: {str(e)}")
@@ -1107,15 +1149,22 @@ async def start_exercise_type_selection(
     callback: types.CallbackQuery,
     plan_id: UUID,
     state: FSMContext,
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
 ) -> None:
     try:
         keyboard = create_exercise_type_keyboard(plan_id)
 
         await state.set_state(PlanFillingStates.choosing_exercise_type)
         await state.update_data(plan_id=str(plan_id))
+        
+        # Get current plan info and format partial plan
+        plan_info = await get_plan_info_view(plan_id)
+        partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
+        
+        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_TYPE_MESSAGE}"
 
         if callback.message:
-            await callback.message.edit_text(CHOOSE_EXERCISE_TYPE_MESSAGE, reply_markup=keyboard)
+            await callback.message.edit_text(message_text, reply_markup=keyboard)
 
     except Exception as e:
         await callback.answer(f"Error getting exercise types: {str(e)}")

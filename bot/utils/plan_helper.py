@@ -83,3 +83,28 @@ class PlanFillingHelper:
             lines.append(f"📋 {plan_info.description}")
 
         return "\n".join(lines)
+
+    @staticmethod
+    def format_partial_plan_info(plan_info: AIAGetPlanInfoResponse) -> str:
+        """Format only the filled fields of the plan for progressive display"""
+        lines = []
+
+        if plan_info.risk_factor:
+            lines.append(f"🔍 Risk Factor: {plan_info.risk_factor.factor}")
+
+        if plan_info.disease:
+            lines.append(f"🏥 Disease: {plan_info.disease.name}")
+
+        if plan_info.user_goal:
+            lines.append(f"🎯 Goal: {plan_info.user_goal.name}")
+
+        if plan_info.place:
+            lines.append(f"📍 Place: {plan_info.place.name}")
+
+        if plan_info.exercise:
+            lines.append(f"💪 Exercise: {plan_info.exercise.name}")
+
+        if plan_info.exercise_type is not None:
+            lines.append(f"🏃 Exercise Type: {plan_info.exercise_type}")
+
+        return "\n".join(lines)
