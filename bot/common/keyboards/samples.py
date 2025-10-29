@@ -199,7 +199,7 @@ def create_exercises_keyboard(exercises: list[ExerciseData], plan_id: UUID) -> I
     for exercise in exercises:
         actions.append(
             {
-                "text": f"{exercise.name} ({exercise.type})",
+                "text": f"{exercise.name}",
                 "callback_data": ExerciseAction(exercise_id=shorten_uuid(exercise.id), plan_id=shorten_uuid(plan_id)),
             }
         )

@@ -101,7 +101,6 @@ class AIAGetPlacesResponse(ApiCamelModel):
 class ExerciseData(ApiCamelModel):
     id: UUID
     name: str
-    type: str
 
 class AIAGetExercisesResponse(ApiCamelModel):
     exercises: list[ExerciseData]
