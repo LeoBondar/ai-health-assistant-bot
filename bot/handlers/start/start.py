@@ -556,17 +556,17 @@ async def handle_factor_selection(
         
         if PlanFillingHelper.is_plan_complete(plan_info):
                 plan_text = PlanFillingHelper.format_plan_info(plan_info)
-            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
-            chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+                has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+                chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
 
-            message_text = (
-                f"✅ Risk factor updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
-            )
-            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+                message_text = (
+                    f"✅ Risk factor updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+                )
+                keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
 
-            if callback.message:
-                await callback.message.edit_text(message_text, reply_markup=keyboard)
-            await FSMMainMenuManager.reset_main_menu_state(state)
+                if callback.message:
+                    await callback.message.edit_text(message_text, reply_markup=keyboard)
+                await FSMMainMenuManager.reset_main_menu_state(state)
         else:
 
             if callback.message:
