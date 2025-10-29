@@ -63,7 +63,7 @@ class PlanFillingHelper:
             lines.append("📍 Place: not filled")
 
         if plan_info.exercise:
-            lines.append(f"💪 Exercise: {plan_info.exercise.name} ({plan_info.exercise.type})")
+            lines.append(f"💪 Exercise: {plan_info.exercise.name}")
         else:
             lines.append("💪 Exercise: not filled")
 
