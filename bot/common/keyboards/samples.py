@@ -126,7 +126,7 @@ def create_plan_keyboard(
 
     if is_complete:
 
-        schema = [1, 2, 2, 1, 1, 1]
+        schema = [1, 2, 2, 2, 1, 1]
     else:
 
         schema = [1, 1, 1]
