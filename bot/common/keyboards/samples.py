@@ -7,6 +7,7 @@ from bot.common.keyboards.inline.callbacks import (
     Action,
     ChatAction,
     ExerciseAction,
+    ExerciseTypeAction,
     FactorAction,
     GoalAction,
     PlaceAction,
@@ -108,6 +109,10 @@ def create_plan_keyboard(
                 {
                     "text": EDIT_EXERCISE,
                     "callback_data": PlanAction(action="edit_exercise", plan_id=shorten_uuid(plan_id)),
+                },
+                {
+                    "text": EDIT_EXERCISE_TYPE,
+                    "callback_data": PlanAction(action="edit_exercise_type", plan_id=shorten_uuid(plan_id)),
                 },
             ]
         )
@@ -229,4 +234,14 @@ def create_preferences_input_keyboard() -> InlineKeyboardMarkup:
             {"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)},
         ],
         schema=[1],
+    )
+
+def create_exercise_type_keyboard(plan_id: UUID) -> InlineKeyboardMarkup:
+    return InlineConstructor._create_kb(
+        actions=[
+            {"text": "🏃‍♂️ Individual Exercise", "callback_data": ExerciseTypeAction(type="SINGLE", plan_id=shorten_uuid(plan_id))},
+            {"text": "👥 Group Exercise", "callback_data": ExerciseTypeAction(type="GROUP", plan_id=shorten_uuid(plan_id))},
+            {"text": BACK_TO_MENU, "callback_data": Action(action=BACK_TO_MENU)},
+        ],
+        schema=[1, 1, 1],
     )

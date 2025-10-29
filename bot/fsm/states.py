@@ -15,6 +15,7 @@ class PlanFillingStates(StatesGroup):
     choosing_goal = State("choosing_goal")
     choosing_place = State("choosing_place")
     choosing_exercise = State("choosing_exercise")
+    choosing_exercise_type = State("choosing_exercise_type")
     plan_completed = State("plan_completed")
 
 class UpdatePlanStates(StatesGroup):

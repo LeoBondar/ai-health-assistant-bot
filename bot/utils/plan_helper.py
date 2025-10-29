@@ -23,6 +23,9 @@ class PlanFillingHelper:
 
         if plan_info.exercise is None:
             return PlanFillingStates.choosing_exercise.state
+            
+        if plan_info.exercise_type is None:
+            return PlanFillingStates.choosing_exercise_type.state
 
         return PlanFillingStates.plan_completed.state
 
@@ -35,6 +38,7 @@ class PlanFillingHelper:
             and plan_info.user_goal is not None
             and plan_info.place is not None
             and plan_info.exercise is not None
+            and plan_info.exercise_type is not None
         )
 
     @staticmethod
@@ -66,6 +70,11 @@ class PlanFillingHelper:
             lines.append(f"💪 Exercise: {plan_info.exercise.name}")
         else:
             lines.append("💪 Exercise: not filled")
+
+        if plan_info.exercise_type is not None:
+            lines.append(f"🏃 Exercise Type: {plan_info.exercise_type}")
+        else:
+            lines.append("🏃 Exercise Type: not filled")
 
         if plan_info.description:
             lines.append("")

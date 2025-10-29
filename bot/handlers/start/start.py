@@ -9,6 +9,7 @@ from bot.common.keyboards.inline.callbacks import (
     Action,
     ChatAction,
     ExerciseAction,
+    ExerciseTypeAction,
     FactorAction,
     GoalAction,
     PlaceAction,
@@ -35,6 +36,7 @@ from bot.common.keyboards.samples import (
     create_chat_keyboard,
     create_disease_input_keyboard,
     create_exercises_keyboard,
+    create_exercise_type_keyboard,
     create_factors_keyboard,
     create_goals_keyboard,
     create_main_menu_keyboard,
@@ -47,6 +49,7 @@ from bot.common.messages import (
     BACK_TO_MENU_MESSAGE,
     CHAT_CREATED_SUCCESS_MESSAGE,
     CHOOSE_EXERCISE_MESSAGE,
+    CHOOSE_EXERCISE_TYPE_MESSAGE,
     CHOOSE_GOAL_MESSAGE,
     CHOOSE_PLACE_MESSAGE,
     CHOOSE_RISK_FACTOR_MESSAGE,
@@ -99,6 +102,7 @@ from bot.views.service.get_risk_factors import GetRiskFactorsView
 from bot.views.service.get_user_goals import GetUserGoalsView
 from bot.views.service.send_message import AddChatMessageView
 from bot.views.service.update_plan import UpdatePlanView
+from bot.views.service.set_plan_exercise_type import SetPlanExerciseTypeView
 
 router = Router(name="start")
 
@@ -848,10 +852,8 @@ async def handle_exercise_selection(
             keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
             await FSMMainMenuManager.reset_main_menu_state(state)
         else:
-            # This was the completion of a new plan
-            message_text = f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
-            keyboard = create_plan_keyboard(plan_id, chat_id, True, False)
-            await state.set_state(PlanFillingStates.plan_completed)
+            # Continue to exercise type selection for new plan
+            await start_exercise_type_selection(callback, plan_id, state)
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -1082,6 +1084,85 @@ async def handle_edit_exercise(
         await callback.answer()
     except Exception as e:
         await callback.answer(f"Error: {str(e)}")
+
+
+@router.callback_query(PlanAction.filter(F.action == "edit_exercise_type"))
+@inject
+async def handle_edit_exercise_type(
+    callback: types.CallbackQuery,
+    callback_data: PlanAction,
+    state: FSMContext,
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        await start_exercise_type_selection(callback, plan_id, state)
+        await callback.answer()
+    except Exception as e:
+        await callback.answer(f"Error: {str(e)}")
+
+
+@inject
+async def start_exercise_type_selection(
+    callback: types.CallbackQuery,
+    plan_id: UUID,
+    state: FSMContext,
+) -> None:
+    try:
+        keyboard = create_exercise_type_keyboard(plan_id)
+
+        await state.set_state(PlanFillingStates.choosing_exercise_type)
+        await state.update_data(plan_id=str(plan_id))
+
+        if callback.message:
+            await callback.message.edit_text(CHOOSE_EXERCISE_TYPE_MESSAGE, reply_markup=keyboard)
+
+    except Exception as e:
+        await callback.answer(f"Error getting exercise types: {str(e)}")
+
+
+@router.callback_query(ExerciseTypeAction.filter())
+@inject
+async def handle_exercise_type_selection(
+    callback: types.CallbackQuery,
+    callback_data: ExerciseTypeAction,
+    state: FSMContext,
+    set_plan_exercise_type_view: SetPlanExerciseTypeView = Provide[DIContainer.set_plan_exercise_type_view],
+    get_plan_info_view: GetPlanInfoView = Provide[DIContainer.get_plan_info_view],
+    get_chats_view: GetUserChatsView = Provide[DIContainer.get_user_chats_view],
+) -> None:
+    try:
+        plan_id = await safe_get_full_uuid(callback_data.plan_id, callback.from_user.id, get_chats_view)
+        exercise_type = callback_data.type
+
+        # First get the old plan info to check if it was already complete
+        old_plan_info = await get_plan_info_view(plan_id)
+        was_complete = PlanFillingHelper.is_plan_complete(old_plan_info)
+
+        await set_plan_exercise_type_view(plan_id, exercise_type)
+        await callback.answer("✅ Exercise type updated!")
+
+        plan_info = await get_plan_info_view(plan_id)
+        plan_text = PlanFillingHelper.format_plan_info(plan_info)
+        chat_id = await get_chat_id_by_plan_id(plan_id, callback.from_user.id, get_chats_view)
+
+        if was_complete:
+            # This was an edit operation
+            has_description = plan_info.description is not None and len(plan_info.description.strip()) > 0
+            message_text = f"✅ Exercise type updated!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, has_description)
+            await FSMMainMenuManager.reset_main_menu_state(state)
+        else:
+            # This was the completion of a new plan
+            message_text = f"🎉 Plan completed successfully!\n\n{PLAN_INFO_MESSAGE.format(plan_info=plan_text)}\n\n{PLAN_READY_MESSAGE}"
+            keyboard = create_plan_keyboard(plan_id, chat_id, True, False)
+            await state.set_state(PlanFillingStates.plan_completed)
+
+        if callback.message:
+            await callback.message.edit_text(message_text, reply_markup=keyboard)
+
+    except Exception as e:
+        await callback.answer(f"Error setting exercise type: {str(e)}")
 
 
 @router.message(ActiveChatStates.in_chat)

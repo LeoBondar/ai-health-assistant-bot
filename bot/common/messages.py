@@ -44,6 +44,9 @@ ERROR_ADDING_TO_PLAN = "❌ Error adding to plan: {error}"
 ERROR_GETTING_DATA = "❌ Error getting data: {error}"
 ERROR_EMPTY_DISEASE_NAME = "❌ Disease name cannot be empty. Please try again:"
 
+CHOOSE_EXERCISE_TYPE_MESSAGE = "🏃 Choose the type of exercise you prefer:"
+EXERCISE_TYPE_ADDED_MESSAGE = "✅ Exercise type set to plan!"
+
 ENTER_PREFERENCES_MESSAGE = "📝 Please enter your preferences and wishes for updating the plan:"
 ERROR_EMPTY_PREFERENCES_MESSAGE = "❌ Preferences cannot be empty. Please try again:"
 UPDATING_PLAN_MESSAGE = "⏳ Updating your plan with your preferences..."

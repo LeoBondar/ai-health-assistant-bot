@@ -46,3 +46,7 @@ class PlaceAction(CallbackData, prefix="place"):
 class ExerciseAction(CallbackData, prefix="exercise"):
     exercise_id: str
     plan_id: str
+
+class ExerciseTypeAction(CallbackData, prefix="exercise_type"):
+    type: str
+    plan_id: str
