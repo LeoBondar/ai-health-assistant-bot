@@ -25,6 +25,7 @@ from bot.common.keyboards.keys import (
     EDIT_GOAL,
     EDIT_PLACE,
     EDIT_RISK_FACTOR,
+    EDIT_EXERCISE_TYPE,
     FILL_PLAN,
     GET_RECOMMENDATIONS,
     SKIP_STEP,
