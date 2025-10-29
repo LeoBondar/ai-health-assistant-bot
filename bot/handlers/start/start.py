@@ -483,7 +483,10 @@ async def start_disease_input(
     plan_info = await get_plan_info_view(plan_id)
     partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
     
-    message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{ENTER_DISEASE_MESSAGE}"
+    if partial_plan_text:
+        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{ENTER_DISEASE_MESSAGE}"
+    else:
+        message_text = ENTER_DISEASE_MESSAGE
 
     if callback.message:
         await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -513,7 +516,10 @@ async def start_goal_selection(
         plan_info = await get_plan_info_view(plan_id)
         partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
         
-        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}"
+        if partial_plan_text:
+            message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}"
+        else:
+            message_text = CHOOSE_GOAL_MESSAGE
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -546,7 +552,10 @@ async def start_place_selection(
         plan_info = await get_plan_info_view(plan_id)
         partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
         
-        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_PLACE_MESSAGE}"
+        if partial_plan_text:
+            message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_PLACE_MESSAGE}"
+        else:
+            message_text = CHOOSE_PLACE_MESSAGE
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -579,7 +588,10 @@ async def start_exercise_selection(
         plan_info = await get_plan_info_view(plan_id)
         partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
         
-        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_MESSAGE}"
+        if partial_plan_text:
+            message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_MESSAGE}"
+        else:
+            message_text = CHOOSE_EXERCISE_MESSAGE
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
@@ -688,9 +700,12 @@ async def handle_skip_disease(
             partial_plan_text = PlanFillingHelper.format_partial_plan_info(updated_plan_info)
 
             if callback.message:
-                await callback.message.edit_text(
-                    f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard
-                )
+                if partial_plan_text:
+                    await callback.message.edit_text(
+                        f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard
+                    )
+                else:
+                    await callback.message.edit_text(CHOOSE_GOAL_MESSAGE, reply_markup=keyboard)
 
         await callback.answer()
 
@@ -754,7 +769,10 @@ async def handle_disease_input(
             updated_plan_info = await get_plan_info_view(plan_id)
             partial_plan_text = PlanFillingHelper.format_partial_plan_info(updated_plan_info)
 
-            await message.answer(f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+            if partial_plan_text:
+                await message.answer(f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_GOAL_MESSAGE}", reply_markup=keyboard)
+            else:
+                await message.answer(CHOOSE_GOAL_MESSAGE, reply_markup=keyboard)
 
     except Exception as e:
         await message.answer(f"Error adding disease: {str(e)}")
@@ -1161,7 +1179,10 @@ async def start_exercise_type_selection(
         plan_info = await get_plan_info_view(plan_id)
         partial_plan_text = PlanFillingHelper.format_partial_plan_info(plan_info)
         
-        message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_TYPE_MESSAGE}"
+        if partial_plan_text:
+            message_text = f"📊 Plan Information:\n{partial_plan_text}\n\n{CHOOSE_EXERCISE_TYPE_MESSAGE}"
+        else:
+            message_text = CHOOSE_EXERCISE_TYPE_MESSAGE
 
         if callback.message:
             await callback.message.edit_text(message_text, reply_markup=keyboard)
