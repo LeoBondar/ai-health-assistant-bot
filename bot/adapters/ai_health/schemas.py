@@ -125,6 +125,7 @@ class AIAGetPlanInfoResponse(ApiCamelModel):
     user_goal: UserGoalData | None = None
     place: PlaceData | None = None
     exercise: ExerciseData | None = None
+    exercise_type: str | None = None
 
 class AIAAddPlanFactorResponse(ApiCamelModel):
     pass
@@ -146,3 +147,10 @@ class AIAGeneratePlanResponse(ApiCamelModel):
 
 class AIAUpdatePlanResponse(ApiCamelModel):
     description: str
+
+class AIASetPlanExerciseTypeCommand(ApiCamelModel):
+    plan_id: UUID
+    exercise_type: str
+
+class AIASetPlanExerciseTypeResponse(ApiCamelModel):
+    pass

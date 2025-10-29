@@ -21,6 +21,7 @@ from bot.views.service.get_risk_factors import GetRiskFactorsView
 from bot.views.service.get_user_goals import GetUserGoalsView
 from bot.views.service.send_message import AddChatMessageView
 from bot.views.service.update_plan import UpdatePlanView
+from bot.views.service.set_plan_exercise_type import SetPlanExerciseTypeView
 
 class DIContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(packages=["bot.handlers", __name__])
@@ -74,3 +75,6 @@ class DIContainer(containers.DeclarativeContainer):
         GeneratePlanView, adapter=ai_health_adapter
     )
     update_plan_view: providers.Factory[UpdatePlanView] = providers.Factory(UpdatePlanView, adapter=ai_health_adapter)
+    set_plan_exercise_type_view: providers.Factory[SetPlanExerciseTypeView] = providers.Factory(
+        SetPlanExerciseTypeView, adapter=ai_health_adapter
+    )

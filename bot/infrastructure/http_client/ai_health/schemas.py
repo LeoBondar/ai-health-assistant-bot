@@ -65,3 +65,7 @@ class AIHCGeneratePlanCommand(ApiCamelModel):
 class AIHCUpdatePlanCommand(ApiCamelModel):
     plan_id: str
     comment: str
+
+class AIHCSetPlanExerciseTypeCommand(ApiCamelModel):
+    plan_id: str
+    exercise_type: str

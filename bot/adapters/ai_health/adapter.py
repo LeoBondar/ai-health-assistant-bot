@@ -32,6 +32,8 @@ from bot.adapters.ai_health.schemas import (
     AIAGetUserChatResponse,
     AIAGetUserGoalsCommand,
     AIAGetUserGoalsResponse,
+    AIASetPlanExerciseTypeCommand,
+    AIASetPlanExerciseTypeResponse,
     AIAUpdatePlanCommand,
     AIAUpdatePlanResponse,
 )
@@ -52,6 +54,7 @@ from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCGetRiskFactorsCommand,
     AIHCGetUserChatCommand,
     AIHCGetUserGoalsCommand,
+    AIHCSetPlanExerciseTypeCommand,
     AIHCUpdatePlanCommand,
 )
 
@@ -103,6 +106,9 @@ class IAIHealthAdapter(Protocol):
         pass
 
     async def update_plan(self, command: AIAUpdatePlanCommand) -> AIAUpdatePlanResponse:
+        pass
+
+    async def set_plan_exercise_type(self, command: AIASetPlanExerciseTypeCommand) -> AIASetPlanExerciseTypeResponse:
         pass
 
 class AIHealthAdapter(IAIHealthAdapter):
@@ -213,3 +219,10 @@ class AIHealthAdapter(IAIHealthAdapter):
         )
         body = json.loads(await response.text())
         return AIAUpdatePlanResponse(**body["result"])
+        
+    async def set_plan_exercise_type(self, command: AIASetPlanExerciseTypeCommand) -> AIASetPlanExerciseTypeResponse:
+        response = await self._client.set_plan_exercise_type(
+            command=AIHCSetPlanExerciseTypeCommand(plan_id=str(command.plan_id), exercise_type=command.exercise_type)
+        )
+        body = json.loads(await response.text())
+        return AIASetPlanExerciseTypeResponse(**body["result"])

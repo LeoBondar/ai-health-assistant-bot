@@ -19,6 +19,7 @@ from bot.infrastructure.http_client.ai_health.schemas import (
     AIHCGetRiskFactorsCommand,
     AIHCGetUserChatCommand,
     AIHCGetUserGoalsCommand,
+    AIHCSetPlanExerciseTypeCommand,
     AIHCUpdatePlanCommand,
 )
 from bot.infrastructure.http_client.base import BaseHTTPClient
@@ -133,6 +134,13 @@ class AIHealthHTTPClient(BaseHTTPClient):
         return await self._make_request(
             uri="/api/v1/chats/plans",
             method=RequestMethodType.PUT,
+            body=command.model_dump(),
+        )
+        
+    async def set_plan_exercise_type(self, command: AIHCSetPlanExerciseTypeCommand) -> ClientResponse:
+        return await self._make_request(
+            uri=f"/api/v1/chats/plans/{command.plan_id}/exercise-type",
+            method=RequestMethodType.POST,
             body=command.model_dump(),
         )
 
