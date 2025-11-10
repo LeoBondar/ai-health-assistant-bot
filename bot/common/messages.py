@@ -29,7 +29,7 @@ RECOMMENDATIONS_UPDATED_MESSAGE = "🔄 Recommendations updated!"
 CHOOSE_RISK_FACTOR_MESSAGE = "🔍 Select a risk factor you wish to begin managing:"
 ENTER_DISEASE_MESSAGE = "🏥 If you have any diseases or conditions that can limit your physical activity, please enter them separated by commas:"
 CHOOSE_GOAL_MESSAGE = "🎯 Choose your goal from the list or enter your own:"
-CHOOSE_PLACE_MESSAGE = "📍 Choose a place for exercises:"
+CHOOSE_PLACE_MESSAGE = "📍 What types of physical activities fit best into your lifestyle?"
 CHOOSE_EXERCISE_MESSAGE = "💪 Choose an exercise:"
 
 FACTOR_ADDED_MESSAGE = "✅ Risk factor added to plan!"
