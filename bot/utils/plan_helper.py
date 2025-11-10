@@ -99,7 +99,7 @@ class PlanFillingHelper:
             lines.append(f"🎯 Goal: {plan_info.user_goal.name}")
 
         if plan_info.place:
-            lines.append(f"📍 Place: {plan_info.place.name}")
+            lines.append(f"📍 Type of physical activity: {plan_info.place.name}")
 
         if plan_info.exercise:
             lines.append(f"💪 Exercise: {plan_info.exercise.name}")
